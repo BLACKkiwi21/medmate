@@ -296,9 +296,31 @@ label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bot
 <div class="mb" id="m-dose">
   <div class="mo">
     <div class="mt" id="dtitle">Take dose</div>
-    <div class="ms">A photo of your medicine is required to confirm</div>
-    <div class="cw"><video id="cv" autoplay playsinline></video><canvas id="cc" style="display:none"></canvas></div>
-    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px">Point your camera clearly at the medicine</div>
+    <div class="ms">Take a photo or upload from gallery to confirm</div>
+
+    <!-- Camera view -->
+    <div id="cam-section">
+      <div class="cw"><video id="cv" autoplay playsinline></video><canvas id="cc" style="display:none"></canvas></div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px">Point your camera at the medicine</div>
+    </div>
+
+    <!-- OR divider -->
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:11px;color:var(--muted)">OR</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <!-- Gallery upload -->
+    <label for="gallery-input" style="display:block">
+      <div style="border:1.5px dashed var(--mint-mid);border-radius:12px;padding:12px;text-align:center;cursor:pointer;background:var(--mint-bg)">
+        <div style="font-size:20px">🖼️</div>
+        <div style="font-size:12px;color:var(--mint);font-weight:600;margin-top:4px">Upload from gallery</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Tap to choose a photo</div>
+      </div>
+    </label>
+    <input type="file" id="gallery-input" accept="image/*" style="display:none" onchange="handleGallery(event)"/>
+
     <div id="aibox"></div>
     <div id="prevbox" style="display:none;margin-top:9px">
       <img id="pimg" style="width:100%;border-radius:13px;max-height:190px;object-fit:cover"/>
@@ -684,6 +706,8 @@ function openDose(id) {
   document.getElementById('aibox').innerHTML = '';
   document.getElementById('prevbox').style.display = 'none';
   document.getElementById('cv').style.display = 'block';
+  document.getElementById('cam-section').style.display = 'block';
+  document.getElementById('gallery-input').value = '';
   const btn = document.getElementById('cbtn');
   btn.textContent = '📸 Capture'; btn.onclick = doCapture; btn.disabled = false;
   document.getElementById('m-dose').classList.add('op');
@@ -694,8 +718,12 @@ async function startCam() {
   try {
     camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'environment' } });
     document.getElementById('cv').srcObject = camStream;
+    document.getElementById('cam-section').style.display = 'block';
   } catch(e) {
-    document.getElementById('aibox').innerHTML = `<div class="ais no">Camera unavailable: ${e.message}<br>Please allow camera access.</div>`;
+    // Camera failed — hide camera section, show gallery only
+    document.getElementById('cam-section').style.display = 'none';
+    document.getElementById('cbtn').style.display = 'none';
+    document.getElementById('aibox').innerHTML = `<div class="ais bw" style="background:#fef6ed;color:var(--warn)">📷 Camera unavailable — please use gallery upload instead.</div>`;
   }
 }
 function stopCam() { if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; } }
@@ -705,23 +733,46 @@ function doCapture() {
   c.width=v.videoWidth||320; c.height=v.videoHeight||240;
   c.getContext('2d').drawImage(v,0,0);
   capData = c.toDataURL('image/jpeg',.75);
+  // Check if captured image is mostly black (camera not ready)
+  const imgData = c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  let brightness = 0;
+  for (let i=0; i<imgData.length; i+=4) brightness += imgData[i]+imgData[i+1]+imgData[i+2];
+  brightness = brightness / (imgData.length/4*3);
+  if (brightness < 10) {
+    document.getElementById('aibox').innerHTML = '<div class="ais no">📷 Photo is too dark — camera may not be ready. Try using gallery upload instead.</div>';
+    return;
+  }
   stopCam();
-  document.getElementById('pimg').src = capData;
+  processPhoto(capData);
+}
+
+// Handle gallery/file upload
+function handleGallery(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    capData = e.target.result;
+    // Hide camera, show preview
+    stopCam();
+    document.getElementById('cam-section').style.display = 'none';
+    processPhoto(capData);
+  };
+  reader.readAsDataURL(file);
+}
+
+function processPhoto(dataUrl) {
+  document.getElementById('pimg').src = dataUrl;
   document.getElementById('prevbox').style.display = 'block';
   document.getElementById('cv').style.display = 'none';
   document.getElementById('aibox').innerHTML = '<div class="ais chk">🔍 AI is verifying your photo...</div>';
   document.getElementById('cbtn').disabled = true;
-  verifyAI(capData);
+  verifyAI(dataUrl);
 }
 
 async function verifyAI(url) {
   const b64 = url.split(',')[1];
-
-  // ─── PASTE YOUR CLOUDFLARE WORKER URL HERE ───────────────────────────────
-  // After deploying worker.js, replace the placeholder below with your URL.
-  // Example: https://medmate-proxy.yourname.workers.dev
   const WORKER_URL = 'https://long-sky-df3a.svhisshal.workers.dev';
-  // ─────────────────────────────────────────────────────────────────────────
 
   try {
     const r = await fetch(WORKER_URL, {
@@ -729,32 +780,63 @@ async function verifyAI(url) {
       headers: { 'Content-Type':'application/json' },
       body: JSON.stringify({ imageBase64: b64 })
     });
+
+    if (!r.ok) {
+      const errText = await r.text();
+      document.getElementById('aibox').innerHTML = `<div class="ais no">⚠️ Worker error ${r.status}: ${errText}</div>`;
+      resetBtn();
+      return;
+    }
+
     const data = await r.json();
     const txt = data.result || '';
-    let res = { pass:false, reason:'Could not verify' };
-    try { res = JSON.parse(txt.replace(/```json|```/g,'').trim()); } catch(e) {}
+
+    // Show raw response for debugging
+    console.log('Gemini raw response:', txt);
+
+    let res = { pass:false, reason:'Could not parse response' };
+    try {
+      const clean = txt.replace(/```json|```/g,'').trim();
+      res = JSON.parse(clean);
+    } catch(e) {
+      // Try to extract pass/fail even if JSON is malformed
+      if (txt.toLowerCase().includes('"pass":true') || txt.toLowerCase().includes('pass": true')) {
+        res = { pass:true, reason:'Medicine detected' };
+      } else {
+        res = { pass:false, reason: txt.substring(0,80) || 'Could not verify' };
+      }
+    }
+
     const btn = document.getElementById('cbtn');
     if (res.pass) {
       document.getElementById('aibox').innerHTML = `<div class="ais ok">✅ Verified! ${res.reason}</div>`;
       btn.textContent='✓ Mark as taken'; btn.disabled=false; btn.onclick=confirmDose;
     } else {
-      document.getElementById('aibox').innerHTML = `<div class="ais no">❌ ${res.reason}. Please retake.</div>`;
+      document.getElementById('aibox').innerHTML = `<div class="ais no">❌ ${res.reason}<br><small style="opacity:.7">Try uploading from gallery instead</small></div>`;
       btn.textContent='🔄 Retake photo'; btn.disabled=false; btn.onclick=retake;
     }
   } catch(e) {
-    document.getElementById('aibox').innerHTML = '<div class="ais no">⚠️ AI check failed. Please try again.</div>';
-    const btn = document.getElementById('cbtn');
-    btn.textContent='🔄 Retake'; btn.disabled=false; btn.onclick=retake;
+    console.error('verifyAI error:', e);
+    document.getElementById('aibox').innerHTML = `<div class="ais no">⚠️ Could not reach AI — check your internet connection.<br><small style="opacity:.7">Error: ${e.message}</small></div>`;
+    resetBtn();
   }
+}
+
+function resetBtn() {
+  const btn = document.getElementById('cbtn');
+  btn.textContent='🔄 Retake'; btn.disabled=false; btn.onclick=retake;
 }
 
 function retake() {
   capData = null;
   document.getElementById('prevbox').style.display = 'none';
   document.getElementById('cv').style.display = 'block';
+  document.getElementById('cam-section').style.display = 'block';
+  document.getElementById('cbtn').style.display = '';
   document.getElementById('aibox').innerHTML = '';
+  document.getElementById('gallery-input').value = '';
   const btn = document.getElementById('cbtn');
-  btn.textContent = '📸 Capture'; btn.onclick = doCapture;
+  btn.textContent = '📸 Capture'; btn.onclick = doCapture; btn.disabled = false;
   startCam();
 }
 
