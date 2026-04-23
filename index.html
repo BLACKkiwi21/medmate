@@ -750,13 +750,28 @@ function doCapture() {
 function handleGallery(event) {
   const file = event.target.files[0];
   if (!file) return;
+  stopCam();
+  document.getElementById('cam-section').style.display = 'none';
+  document.getElementById('aibox').innerHTML = '<div class="ais chk">⏳ Processing image...</div>';
+
   const reader = new FileReader();
   reader.onload = e => {
-    capData = e.target.result;
-    // Hide camera, show preview
-    stopCam();
-    document.getElementById('cam-section').style.display = 'none';
-    processPhoto(capData);
+    // Compress image using canvas before sending
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      // Resize to max 800px wide to reduce file size
+      const maxW = 800;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      capData = canvas.toDataURL('image/jpeg', 0.6); // compress to 60% quality
+      const sizeKB = Math.round(capData.length * 0.75 / 1024);
+      console.log(`Image compressed to ~${sizeKB}KB`);
+      processPhoto(capData);
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
