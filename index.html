@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MedMate – Medicine Reminder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+         signOut, onAuthStateChanged, updateProfile }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, onSnapshot,
+         query, where, orderBy, deleteDoc, updateDoc, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ─── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────────────────────
+// 1. Go to https://console.firebase.google.com
+// 2. Create a project → Add web app → copy the config object below
+const firebaseConfig = {
+  apiKey:            "AIzaSyCaCL5z-sQAiN4wxrkC8Lrn3hbX_ykdYeY",
+  authDomain:        "medmade-54333.firebaseapp.com",
+  projectId:         "medmade-54333",
+  storageBucket:     "medmade-54333.firebasestorage.app",
+  messagingSenderId: "894017733390",
+  appId:             "1:894017733390:web:c65cb09f03fa120a9dcd5f"
+};
+// ──────────────────────────────────────────────────────────────────────────────
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+window._fb = {
+  auth, db,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged, updateProfile,
+  doc, setDoc, getDoc, collection, addDoc, onSnapshot,
+  query, where, orderBy, deleteDoc, updateDoc, serverTimestamp
+};
+window.dispatchEvent(new Event('fbready'));
+</script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --mint:#3aaa7a;--mint-bg:#e8f5f0;--mint-mid:#b2dece;
+  --sage:#f4f7f5;--text:#1a2620;--muted:#6b7e76;
+  --border:#dde8e3;--white:#fff;--red:#e05252;--warn:#e08c3a;
+  --r:18px;--pr:100px
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--sage);color:var(--text);min-height:100vh}
+
+/* AUTH */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.auth-box{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:32px;width:100%;max-width:400px}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:28px;color:var(--mint);text-align:center;margin-bottom:4px}
+.auth-sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:26px}
+.auth-toggle{text-align:center;font-size:13px;color:var(--muted);margin-top:14px}
+.auth-toggle span{color:var(--mint);cursor:pointer;font-weight:500}
+.auth-err{background:#fdf0f0;border:1px solid #f5c6c6;border-radius:10px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px;display:none}
+
+/* APP */
+#app-screen{display:none}
+.nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 14px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;gap:8px}
+.logo{font-family:'DM Serif Display',serif;font-size:18px;color:var(--mint);flex-shrink:0}
+.tabs{display:flex;gap:2px}
+.tab{padding:5px 11px;border-radius:var(--pr);font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;white-space:nowrap}
+.tab.on{background:var(--mint-bg);color:var(--mint)}
+.nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.uchip{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+
+/* PAGES */
+.page{display:none;padding:18px;max-width:520px;margin:0 auto}
+.page.on{display:block}
+.ph{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:3px}
+.ps{font-size:12px;color:var(--muted);margin-bottom:18px}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:12px}
+.ct{font-weight:600;font-size:14px;margin-bottom:12px}
+
+/* FORM */
+input,select{width:100%;border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-family:inherit;font-size:13px;color:var(--text);background:var(--sage);outline:none;transition:border .2s}
+input:focus,select:focus{border-color:var(--mint);background:var(--white)}
+label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px}
+.fld{margin-bottom:12px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 18px;border-radius:var(--pr);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .2s}
+.bp{background:var(--mint);color:#fff;width:100%}.bp:hover{background:#2e9068}.bp:disabled{background:var(--mint-mid);cursor:default}
+.bo{background:transparent;border:1px solid var(--border);color:var(--text)}.bo:hover{background:var(--sage)}
+.bd{background:#fdf0f0;color:var(--red);border:1px solid #f5c6c6}
+.sm{padding:6px 12px;font-size:11px}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 9px;border-radius:var(--pr);font-size:11px;font-weight:600}
+.bg{background:var(--mint-bg);color:var(--mint)}.br{background:#fdf0f0;color:var(--red)}
+.bw{background:#fef6ed;color:var(--warn)}.bx{background:var(--sage);color:var(--muted)}
+
+/* MED ITEM */
+.mi{display:flex;align-items:center;gap:10px;padding:13px 15px;background:var(--white);border:1px solid var(--border);border-radius:14px;margin-bottom:9px}
+.mico{width:38px;height:38px;border-radius:10px;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.mnm{font-weight:600;font-size:13px}.msb{font-size:11px;color:var(--muted);margin-top:2px}
+.mac{display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-left:auto}
+
+/* DOSE ROW */
+.dr{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
+.dr:last-child{border-bottom:none}
+.dth{width:42px;height:42px;border-radius:9px;background:var(--sage);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden}
+.dth img{width:42px;height:42px;border-radius:9px;object-fit:cover}
+.dnm{font-size:13px;font-weight:600}.dtm{font-size:11px;color:var(--muted)}
+
+/* CAMERA */
+.cw{width:100%;border-radius:13px;overflow:hidden;background:#111;aspect-ratio:4/3}
+#cv{width:100%;height:100%;object-fit:cover}
+
+/* MODAL */
+.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px}
+.mb.op{display:flex}
+.mo{background:var(--white);border-radius:var(--r);padding:22px;width:100%;max-width:420px;max-height:92vh;overflow-y:auto}
+.mt{font-family:'DM Serif Display',serif;font-size:21px;margin-bottom:3px}
+.ms{font-size:12px;color:var(--muted);margin-bottom:16px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:9px 20px;border-radius:var(--pr);font-size:12px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* ALERT */
+.ab{background:#fef6ed;border:1px solid #f5d7b0;border-radius:11px;padding:11px 14px;font-size:12px;color:var(--warn);font-weight:500;margin-bottom:12px}
+
+/* FRIENDS */
+.fi{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.fi:last-child{border-bottom:none}
+.fav{width:34px;height:34px;border-radius:50%;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--mint);margin-right:9px;flex-shrink:0}
+
+/* CODE */
+.cb{background:var(--sage);border:1px dashed var(--border);border-radius:10px;padding:11px;text-align:center;font-size:22px;font-weight:700;letter-spacing:5px;color:var(--mint);cursor:pointer;user-select:all}
+
+/* AI STATUS */
+.ais{border-radius:11px;padding:12px;font-size:12px;margin-top:8px}
+.ais.chk{background:#f0f4fe;color:#3a5fd8}
+.ais.ok{background:var(--mint-bg);color:var(--mint)}
+.ais.no{background:#fdf0f0;color:var(--red)}
+
+/* MONITOR */
+.mhdr{background:linear-gradient(135deg,var(--mint-bg),#d2ede4);border-radius:var(--r);padding:18px;margin-bottom:12px}
+.sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.sb{background:var(--white);border-radius:10px;padding:10px;text-align:center}
+.sn{font-size:20px;font-weight:700;color:var(--mint)}.sl{font-size:10px;color:var(--muted);margin-top:1px}
+.sd{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.dot{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+.tk{background:var(--mint-bg);color:var(--mint)}.mk{background:#fdf0f0;color:var(--red)}.ft{background:var(--sage);color:var(--muted)}
+
+/* MISC */
+.es{text-align:center;padding:36px 16px;color:var(--muted);font-size:13px}
+.ei{font-size:32px;margin-bottom:8px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--mint-mid);border-top-color:var(--mint);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--mint);display:inline-block;margin-right:5px;animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<!-- ══════════ AUTH SCREEN ══════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">💊 MedMate</div>
+    <div class="auth-sub" id="auth-subtitle">Sign in to your account</div>
+    <div class="auth-err" id="auth-err"></div>
+    <div id="name-wrap" class="fld" style="display:none">
+      <label>Your name</label>
+      <input id="a-name" placeholder="e.g. Ahmad"/>
+    </div>
+    <div class="fld"><label>Email</label><input type="email" id="a-email" placeholder="you@example.com"/></div>
+    <div class="fld"><label>Password</label><input type="password" id="a-pass" placeholder="Min. 6 characters"/></div>
+    <button class="btn bp" id="auth-btn" onclick="doAuth()">Sign in</button>
+    <div class="auth-toggle" id="auth-toggle">
+      No account? <span onclick="toggleAuth()">Create one</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ APP SCREEN ══════════ -->
+<div id="app-screen">
+  <nav class="nav">
+    <span class="logo">💊 MedMate</span>
+    <div class="tabs">
+      <button class="tab on" onclick="go('home',this)">Home</button>
+      <button class="tab"    onclick="go('log',this)">Log</button>
+      <button class="tab"    onclick="go('family',this)">Family</button>
+      <button class="tab"    onclick="go('monitor',this)">Monitor</button>
+    </div>
+    <div class="nav-right">
+      <span class="uchip" id="uchip"></span>
+      <button class="btn bo sm" onclick="doSignOut()">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- HOME -->
+  <div class="page on" id="pg-home">
+    <div style="padding-top:16px">
+      <div class="ph" id="greet">Good day 👋</div>
+      <div class="ps">Your medicines for today</div>
+      <div id="alerts"></div>
+      <div id="med-home"></div>
+      <button class="btn bo" style="width:100%;margin-top:6px" onclick="openAdd()">+ Add medicine</button>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="page" id="pg-log">
+    <div style="padding-top:16px">
+      <div class="ph">Dose history</div>
+      <div class="ps">All verified doses with photo proof</div>
+      <div id="log-list"></div>
+    </div>
+  </div>
+
+  <!-- FAMILY -->
+  <div class="page" id="pg-family">
+    <div style="padding-top:16px">
+      <div class="ph">Family & friends</div>
+      <div class="ps">Let others track your progress in real time</div>
+      <div class="card">
+        <div class="ct">Your access code</div>
+        <div class="cb" id="acode" onclick="cpCode()">------</div>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px">Tap to copy · Share with people you trust</div>
+        <div style="margin:12px 0;height:1px;background:var(--border)"></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Or share a direct link</div>
+        <div style="display:flex;gap:7px">
+          <input id="slink" readonly style="font-size:11px"/>
+          <button class="btn bo sm" onclick="cpLink()">Copy</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">Add monitor by email</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">The person must have a MedMate account. They use their own login to view your dashboard via the Monitor tab.</div>
+        <div class="fld"><label>Email address</label><input type="email" id="inv-email" placeholder="friend@example.com"/></div>
+        <button class="btn bp" onclick="doInvite()">Add monitor</button>
+      </div>
+      <div class="card">
+        <div class="ct">Current monitors</div>
+        <div id="flist"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MONITOR -->
+  <div class="page" id="pg-monitor">
+    <div style="padding-top:16px">
+      <div class="ph">Monitor someone</div>
+      <div class="ps">Enter their 6-character code — dashboard updates live</div>
+      <div class="card">
+        <div class="fld">
+          <label>Access code</label>
+          <input id="mcode" placeholder="e.g. A3F9X2" maxlength="6"
+            style="text-transform:uppercase;letter-spacing:4px;font-size:20px;text-align:center"/>
+        </div>
+        <button class="btn bp" onclick="doMonitor()">View live dashboard</button>
+      </div>
+      <div id="mdash" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MEDICINE MODAL -->
+<div class="mb" id="m-add">
+  <div class="mo">
+    <div class="mt">Add medicine</div>
+    <div class="ms">Set up a reminder with a scheduled time</div>
+    <div class="fld"><label>Medicine name</label><input id="mn" placeholder="e.g. Metformin 500mg"/></div>
+    <div class="fld"><label>Dosage / notes</label><input id="md" placeholder="e.g. 1 tablet with food"/></div>
+    <div class="fld"><label>Reminder time</label><input type="time" id="mti"/></div>
+    <div class="fld"><label>Icon</label>
+      <select id="micon">
+        <option value="💊">💊 Tablet / Capsule</option>
+        <option value="💉">💉 Injection</option>
+        <option value="🩺">🩺 General</option>
+        <option value="🫁">🫁 Inhaler</option>
+        <option value="🧴">🧴 Liquid / Syrup</option>
+        <option value="🩹">🩹 Patch</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:4px">
+      <button class="btn bo" style="flex:1" onclick="cm('m-add')">Cancel</button>
+      <button class="btn bp" style="flex:1" onclick="saveMed()">Add medicine</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAKE DOSE MODAL -->
+<div class="mb" id="m-dose">
+  <div class="mo">
+    <div class="mt" id="dtitle">Take dose</div>
+    <div class="ms">A photo of your medicine is required to confirm</div>
+    <div class="cw"><video id="cv" autoplay playsinline></video><canvas id="cc" style="display:none"></canvas></div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px">Point your camera clearly at the medicine</div>
+    <div id="aibox"></div>
+    <div id="prevbox" style="display:none;margin-top:9px">
+      <img id="pimg" style="width:100%;border-radius:13px;max-height:190px;object-fit:cover"/>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:12px">
+      <button class="btn bo" style="flex:1" onclick="closeDose()">Cancel</button>
+      <button class="btn bp" style="flex:1" id="cbtn" onclick="doCapture()">📸 Capture</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<script>
+let FB = null;
+let currentUser = null;
+let userCode = '';
+let meds = [], doses = [], friends = [];
+let medsUnsub = null, dosesUnsub = null;
+let curMed = null, camStream = null, capData = null;
+let isSignUp = false;
+
+window.addEventListener('fbready', () => {
+  FB = window._fb;
+  FB.onAuthStateChanged(FB.auth, user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+      document.getElementById('uchip').textContent = user.displayName || user.email.split('@')[0];
+      loadUserProfile();
+      subscribeToMeds();
+      subscribeToDoses();
+      loadFriends();
+      scheduleReminders();
+    } else {
+      currentUser = null;
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app-screen').style.display = 'none';
+      if (medsUnsub) medsUnsub();
+      if (dosesUnsub) dosesUnsub();
+    }
+  });
+});
+
+// ── AUTH ───────────────────────────────────────────────────────────────────────
+function toggleAuth() {
+  isSignUp = !isSignUp;
+  document.getElementById('auth-subtitle').textContent = isSignUp ? 'Create a new account' : 'Sign in to your account';
+  document.getElementById('auth-btn').textContent = isSignUp ? 'Create account' : 'Sign in';
+  document.getElementById('auth-toggle').innerHTML = isSignUp
+    ? 'Already have an account? <span onclick="toggleAuth()">Sign in</span>'
+    : 'No account? <span onclick="toggleAuth()">Create one</span>';
+  document.getElementById('name-wrap').style.display = isSignUp ? 'block' : 'none';
+  document.getElementById('auth-err').style.display = 'none';
+}
+
+async function doAuth() {
+  if (!FB) { showAuthErr('Still loading — please wait a moment.'); return; }
+  const email = document.getElementById('a-email').value.trim();
+  const pass  = document.getElementById('a-pass').value;
+  const name  = document.getElementById('a-name').value.trim();
+  if (!email || !pass) { showAuthErr('Please enter your email and password.'); return; }
+  const btn = document.getElementById('auth-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Please wait...';
+  try {
+    if (isSignUp) {
+      if (!name) { showAuthErr('Please enter your name.'); reset(); return; }
+      const cred = await FB.createUserWithEmailAndPassword(FB.auth, email, pass);
+      await FB.updateProfile(cred.user, { displayName: name });
+      const code = genCode();
+      await FB.setDoc(FB.doc(FB.db,'users',cred.user.uid), {
+        name, email, code, uid: cred.user.uid, monitors: [],
+        createdAt: FB.serverTimestamp()
+      });
+    } else {
+      await FB.signInWithEmailAndPassword(FB.auth, email, pass);
+    }
+  } catch(e) {
+    showAuthErr(authErr(e.code));
+    reset();
+  }
+  function reset() {
+    btn.disabled = false;
+    btn.textContent = isSignUp ? 'Create account' : 'Sign in';
+  }
+}
+
+function showAuthErr(msg) {
+  const el = document.getElementById('auth-err');
+  el.textContent = msg; el.style.display = 'block';
+}
+function authErr(code) {
+  return ({
+    'auth/email-already-in-use':'That email is already registered.',
+    'auth/invalid-email':'Please enter a valid email.',
+    'auth/weak-password':'Password must be at least 6 characters.',
+    'auth/wrong-password':'Incorrect password.',
+    'auth/user-not-found':'No account found for that email.',
+    'auth/invalid-credential':'Incorrect email or password.',
+  })[code] || 'Something went wrong. Please try again.';
+}
+async function doSignOut() { await FB.signOut(FB.auth); }
+function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
+
+// ── USER PROFILE ───────────────────────────────────────────────────────────────
+async function loadUserProfile() {
+  const snap = await FB.getDoc(FB.doc(FB.db,'users',currentUser.uid));
+  if (snap.exists()) {
+    const data = snap.data();
+    userCode = data.code;
+    document.getElementById('acode').textContent = userCode;
+    document.getElementById('slink').value = location.origin + location.pathname + '?monitor=' + userCode;
+  }
+  const hr = new Date().getHours();
+  const g = hr<12 ? 'Good morning' : hr<17 ? 'Good afternoon' : 'Good evening';
+  const n = currentUser.displayName || currentUser.email.split('@')[0];
+  document.getElementById('greet').textContent = `${g}, ${n} 👋`;
+}
+
+// ── MEDICINES ─────────────────────────────────────────────────────────────────
+function subscribeToMeds() {
+  if (medsUnsub) medsUnsub();
+  const q = FB.query(FB.collection(FB.db,'medicines'), FB.where('uid','==',currentUser.uid));
+  medsUnsub = FB.onSnapshot(q, snap => {
+    meds = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    rHome();
+  });
+}
+
+async function saveMed() {
+  const n = document.getElementById('mn').value.trim();
+  const d = document.getElementById('md').value.trim();
+  const t = document.getElementById('mti').value;
+  const i = document.getElementById('micon').value;
+  if (!n||!t) { toast('Please fill in name and time'); return; }
+  await FB.addDoc(FB.collection(FB.db,'medicines'), {
+    uid: currentUser.uid, name:n, dose:d, time:t, icon:i, createdAt: FB.serverTimestamp()
+  });
+  cm('m-add');
+  ['mn','md','mti'].forEach(id => document.getElementById(id).value = '');
+  toast('Medicine added!');
+}
+
+async function delMed(id) {
+  if (!confirm('Remove this medicine?')) return;
+  await FB.deleteDoc(FB.doc(FB.db,'medicines',id));
+  toast('Removed');
+}
+
+// ── DOSES ──────────────────────────────────────────────────────────────────────
+function subscribeToDoses() {
+  if (dosesUnsub) dosesUnsub();
+  const q = FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',currentUser.uid), FB.orderBy('takenAt','desc'));
+  dosesUnsub = FB.onSnapshot(q, snap => {
+    doses = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    rHome();
+    if (document.getElementById('pg-log').classList.contains('on')) rLog();
+  });
+}
+
+function tsToDate(ts) {
+  if (!ts) return new Date();
+  return ts.toDate ? ts.toDate() : new Date(ts);
+}
+
+// ── HOME ───────────────────────────────────────────────────────────────────────
+function rHome() {
+  const now = new Date(), tod = now.toDateString();
+  let missed = 0;
+  meds.forEach(m => {
+    const tk = doses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
+    if (!tk) {
+      const [h,mn] = m.time.split(':').map(Number), s = new Date(); s.setHours(h,mn,0,0);
+      if (s < now) missed++;
+    }
+  });
+  document.getElementById('alerts').innerHTML = missed > 0
+    ? `<div class="ab">⚠️ You have ${missed} missed dose${missed>1?'s':''} today — your monitors can see this.</div>` : '';
+
+  const el = document.getElementById('med-home');
+  if (!meds.length) { el.innerHTML='<div class="es"><div class="ei">💊</div>No medicines yet.<br>Tap below to add one!</div>'; return; }
+
+  el.innerHTML = meds.map(m => {
+    const tk = doses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
+    const st = tk ? 'taken' : doseStatus(m);
+    const bm = {taken:'bg',due:'bw',upcoming:'bx',missed:'br'};
+    const lm = {taken:'✓ Taken',due:'Due now',upcoming:'Upcoming',missed:'Missed'};
+    return `<div class="mi">
+      <div class="mico">${m.icon}</div>
+      <div style="flex:1">
+        <div class="mnm">${m.name}</div>
+        <div class="msb">${m.dose||'No notes'} · ${m.time}</div>
+      </div>
+      <div class="mac">
+        <span class="badge ${bm[st]}">${lm[st]}</span>
+        ${!tk ? `<button class="btn bo sm" onclick="openDose('${m.id}')">Take dose</button>` : ''}
+        <button class="btn bd sm" onclick="delMed('${m.id}')">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function doseStatus(m) {
+  const now = new Date(), [h,mn] = m.time.split(':').map(Number), s = new Date();
+  s.setHours(h,mn,0,0);
+  const d = (s - now) / 60000;
+  return d < -30 ? 'missed' : d <= 30 ? 'due' : 'upcoming';
+}
+
+// ── LOG ────────────────────────────────────────────────────────────────────────
+function rLog() {
+  const el = document.getElementById('log-list');
+  if (!doses.length) { el.innerHTML='<div class="es"><div class="ei">📋</div>No doses logged yet</div>'; return; }
+  el.innerHTML = doses.map(d => {
+    const m = meds.find(x => x.id===d.medId);
+    const t = tsToDate(d.takenAt);
+    const lbl = t.toLocaleDateString('en-MY',{weekday:'short',month:'short',day:'numeric'}) + ' · ' +
+                t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="dr">
+      <div class="dth">${d.photo ? `<img src="${d.photo}"/>` : (m?m.icon:'💊')}</div>
+      <div style="flex:1"><div class="dnm">${m?m.name:d.medName}</div><div class="dtm">${lbl}</div></div>
+      <span class="badge bg">✓ Verified</span>
+    </div>`;
+  }).join('');
+}
+
+// ── FAMILY ─────────────────────────────────────────────────────────────────────
+async function loadFriends() {
+  const snap = await FB.getDoc(FB.doc(FB.db,'users',currentUser.uid));
+  friends = snap.exists() ? (snap.data().monitors || []) : [];
+  rFamily();
+}
+
+function rFamily() {
+  const el = document.getElementById('flist');
+  if (!friends.length) { el.innerHTML='<div class="es"><div class="ei">👥</div>No monitors added yet</div>'; return; }
+  el.innerHTML = friends.map(f => {
+    const ini = (f.name||f.email).split(' ').map(w=>w[0]).join('').toUpperCase().substr(0,2);
+    return `<div class="fi">
+      <div class="fav">${ini}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${f.name||f.email}</div>
+        <div style="font-size:11px;color:var(--muted)">${f.email}</div>
+      </div>
+      <button class="btn bd sm" onclick="removeMonitor('${f.email}')">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+async function doInvite() {
+  const email = document.getElementById('inv-email').value.trim();
+  if (!email || !email.includes('@')) { toast('Enter a valid email'); return; }
+  if (friends.find(f => f.email===email)) { toast('Already a monitor'); return; }
+  friends.push({ email, name: email.split('@')[0] });
+  await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { monitors: friends });
+  document.getElementById('inv-email').value = '';
+  rFamily();
+  toast(`✅ ${email} added as monitor`);
+}
+
+async function removeMonitor(email) {
+  friends = friends.filter(f => f.email !== email);
+  await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { monitors: friends });
+  rFamily();
+  toast('Monitor removed');
+}
+
+// ── MONITOR DASHBOARD (live) ───────────────────────────────────────────────────
+async function doMonitor() {
+  const code = document.getElementById('mcode').value.trim().toUpperCase();
+  if (code.length < 4) { toast('Enter a valid access code'); return; }
+  const dash = document.getElementById('mdash');
+  dash.style.display = 'block';
+  dash.innerHTML = '<div class="card" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span> Loading...</div>';
+
+  // Find target user by code
+  let targetUser = null;
+  await new Promise(res => {
+    const q = FB.query(FB.collection(FB.db,'users'), FB.where('code','==',code));
+    const u = FB.onSnapshot(q, snap => {
+      if (!snap.empty) targetUser = snap.docs[0].data();
+      u(); res();
+    });
+  });
+
+  if (!targetUser) {
+    dash.innerHTML = `<div class="card"><div class="es"><div class="ei">🔍</div>No user found for code <b>${code}</b><br><small style="color:var(--muted)">Make sure the code is correct</small></div></div>`;
+    return;
+  }
+
+  const uid = targetUser.uid;
+  let tMeds = [], tDoses = [];
+
+  function redraw() { renderDash(targetUser, tMeds, tDoses, dash); }
+
+  // Live subscriptions
+  FB.onSnapshot(FB.query(FB.collection(FB.db,'medicines'), FB.where('uid','==',uid)), snap => {
+    tMeds = snap.docs.map(d => ({id:d.id,...d.data()})); redraw();
+  });
+  FB.onSnapshot(FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',uid), FB.orderBy('takenAt','desc')), snap => {
+    tDoses = snap.docs.map(d => ({id:d.id,...d.data()})); redraw();
+  });
+}
+
+function renderDash(user, tMeds, tDoses, el) {
+  const tod = new Date().toDateString();
+  const taken = tMeds.filter(m => tDoses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod)).length;
+  const total = tMeds.length, missed = total - taken, streak = calcStreak(tDoses);
+  const recent = tDoses.slice(0,5);
+
+  el.innerHTML = `
+    <div class="mhdr">
+      <div style="font-family:'DM Serif Display',serif;font-size:19px">📊 ${user.name}'s Dashboard</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px"><span class="live-dot"></span>Live — updates automatically</div>
+      <div class="sg">
+        <div class="sb"><div class="sn">${taken}</div><div class="sl">Taken today</div></div>
+        <div class="sb"><div class="sn" style="color:${missed>0?'var(--red)':'var(--mint)'}">${missed}</div><div class="sl">Missed today</div></div>
+        <div class="sb"><div class="sn">${streak}</div><div class="sl">Streak 🔥</div></div>
+      </div>
+    </div>
+    ${missed > 0
+      ? `<div class="ab">⚠️ ${user.name} has ${missed} missed dose${missed>1?'s':''} today!</div>`
+      : total > 0
+        ? `<div style="background:var(--mint-bg);border-radius:10px;padding:10px;text-align:center;font-size:13px;color:var(--mint);font-weight:600;margin-bottom:12px">✅ All doses taken today</div>`
+        : ''}
+    <div class="card">
+      <div class="ct">This week</div>
+      <div class="sd">${buildDots(tDoses)}</div>
+    </div>
+    <div class="card">
+      <div class="ct">Medicines</div>
+      ${tMeds.length ? tMeds.map(m => {
+        const tk = tDoses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
+        return `<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:18px">${m.icon}</span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">${m.name}</div><div style="font-size:11px;color:var(--muted)">${m.dose||''} · ${m.time}</div></div>
+          <span class="badge ${tk?'bg':'br'}">${tk?'✓ Taken':'Not yet'}</span>
+        </div>`;
+      }).join('') : '<div style="font-size:13px;color:var(--muted);padding:8px 0">No medicines set up</div>'}
+    </div>
+    <div class="card">
+      <div class="ct">Recent doses</div>
+      ${recent.length ? recent.map(d => {
+        const m = tMeds.find(x => x.id===d.medId);
+        const t = tsToDate(d.takenAt);
+        return `<div class="dr">
+          <div class="dth">${d.photo ? `<img src="${d.photo}"/>` : (m?m.icon:'💊')}</div>
+          <div style="flex:1">
+            <div class="dnm">${m?m.name:d.medName}</div>
+            <div class="dtm">${t.toLocaleDateString('en-MY',{month:'short',day:'numeric'})} · ${t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+          <span class="badge bg">✓</span>
+        </div>`;
+      }).join('') : '<div class="es" style="padding:14px 0">No doses yet</div>'}
+    </div>`;
+}
+
+function calcStreak(doseList) {
+  let s = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    if (doseList.some(x => tsToDate(x.takenAt).toDateString()===d.toDateString())) s++;
+    else if (i > 0) break;
+  }
+  return s;
+}
+
+function buildDots(doseList) {
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-(6-i));
+    const tk = doseList.some(x => tsToDate(x.takenAt).toDateString()===d.toDateString());
+    return `<div class="dot ${tk?'tk':i<6?'mk':'ft'}">${['S','M','T','W','T','F','S'][d.getDay()]}</div>`;
+  }).join('');
+}
+
+// ── CAMERA / AI ────────────────────────────────────────────────────────────────
+function openDose(id) {
+  curMed = id; capData = null;
+  const m = meds.find(x => x.id===id);
+  document.getElementById('dtitle').textContent = m ? m.name : 'Take dose';
+  document.getElementById('aibox').innerHTML = '';
+  document.getElementById('prevbox').style.display = 'none';
+  document.getElementById('cv').style.display = 'block';
+  const btn = document.getElementById('cbtn');
+  btn.textContent = '📸 Capture'; btn.onclick = doCapture; btn.disabled = false;
+  document.getElementById('m-dose').classList.add('op');
+  startCam();
+}
+
+async function startCam() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'environment' } });
+    document.getElementById('cv').srcObject = camStream;
+  } catch(e) {
+    document.getElementById('aibox').innerHTML = `<div class="ais no">Camera unavailable: ${e.message}<br>Please allow camera access.</div>`;
+  }
+}
+function stopCam() { if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; } }
+
+function doCapture() {
+  const v=document.getElementById('cv'), c=document.getElementById('cc');
+  c.width=v.videoWidth||320; c.height=v.videoHeight||240;
+  c.getContext('2d').drawImage(v,0,0);
+  capData = c.toDataURL('image/jpeg',.75);
+  stopCam();
+  document.getElementById('pimg').src = capData;
+  document.getElementById('prevbox').style.display = 'block';
+  document.getElementById('cv').style.display = 'none';
+  document.getElementById('aibox').innerHTML = '<div class="ais chk">🔍 AI is verifying your photo...</div>';
+  document.getElementById('cbtn').disabled = true;
+  verifyAI(capData);
+}
+
+async function verifyAI(url) {
+  const b64 = url.split(',')[1];
+
+  // ─── PASTE YOUR CLOUDFLARE WORKER URL HERE ───────────────────────────────
+  // After deploying worker.js, replace the placeholder below with your URL.
+  // Example: https://medmate-proxy.yourname.workers.dev
+  const WORKER_URL = 'https://long-sky-df3a.svhisshal.workers.dev';
+  // ─────────────────────────────────────────────────────────────────────────
+
+  try {
+    const r = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ imageBase64: b64 })
+    });
+    const data = await r.json();
+    const txt = data.result || '';
+    let res = { pass:false, reason:'Could not verify' };
+    try { res = JSON.parse(txt.replace(/```json|```/g,'').trim()); } catch(e) {}
+    const btn = document.getElementById('cbtn');
+    if (res.pass) {
+      document.getElementById('aibox').innerHTML = `<div class="ais ok">✅ Verified! ${res.reason}</div>`;
+      btn.textContent='✓ Mark as taken'; btn.disabled=false; btn.onclick=confirmDose;
+    } else {
+      document.getElementById('aibox').innerHTML = `<div class="ais no">❌ ${res.reason}. Please retake.</div>`;
+      btn.textContent='🔄 Retake photo'; btn.disabled=false; btn.onclick=retake;
+    }
+  } catch(e) {
+    document.getElementById('aibox').innerHTML = '<div class="ais no">⚠️ AI check failed. Please try again.</div>';
+    const btn = document.getElementById('cbtn');
+    btn.textContent='🔄 Retake'; btn.disabled=false; btn.onclick=retake;
+  }
+}
+
+function retake() {
+  capData = null;
+  document.getElementById('prevbox').style.display = 'none';
+  document.getElementById('cv').style.display = 'block';
+  document.getElementById('aibox').innerHTML = '';
+  const btn = document.getElementById('cbtn');
+  btn.textContent = '📸 Capture'; btn.onclick = doCapture;
+  startCam();
+}
+
+async function confirmDose() {
+  const m = meds.find(x => x.id===curMed);
+  await FB.addDoc(FB.collection(FB.db,'doses'), {
+    uid: currentUser.uid,
+    medId: curMed,
+    medName: m ? m.name : '',
+    photo: capData,
+    takenAt: FB.serverTimestamp()
+  });
+  closeDose();
+  toast('✅ Dose marked as taken!');
+}
+
+function closeDose() {
+  stopCam();
+  document.getElementById('m-dose').classList.remove('op');
+  document.getElementById('cv').style.display = 'block';
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────────
+function go(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on'); el.classList.add('on');
+  if (id==='log') rLog();
+  if (id==='family') rFamily();
+}
+function openAdd() { document.getElementById('m-add').classList.add('op'); }
+function cm(id) { document.getElementById(id).classList.remove('op'); }
+function cpCode() { navigator.clipboard.writeText(userCode).then(()=>toast('Code copied!')).catch(()=>{}); }
+function cpLink() { navigator.clipboard.writeText(document.getElementById('slink').value).then(()=>toast('Link copied!')).catch(()=>{}); }
+function toast(msg) {
+  const e=document.getElementById('tst');
+  e.textContent=msg; e.classList.add('show');
+  setTimeout(()=>e.classList.remove('show'),2600);
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────────────────────────────────
+function scheduleReminders() {
+  if ('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+  setInterval(() => {
+    if (!meds.length || Notification.permission!=='granted') return;
+    const now=new Date(), tod=now.toDateString();
+    meds.forEach(m => {
+      const [h,mn]=m.time.split(':').map(Number), s=new Date(); s.setHours(h,mn,0,0);
+      const diff=Math.abs(now-s)/60000;
+      const taken=doses.find(d=>d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
+      if (diff<2 && !taken) {
+        new Notification('MedMate 💊',{body:`Time to take ${m.name}${m.dose?' – '+m.dose:''}`});
+      }
+    });
+  }, 30000);
+}
+
+// ── URL PARAM: auto-open monitor ───────────────────────────────────────────────
+const _mc = new URLSearchParams(location.search).get('monitor');
+if (_mc) {
+  window.addEventListener('fbready', () => {
+    FB.onAuthStateChanged(FB.auth, user => {
+      if (user) {
+        setTimeout(() => {
+          document.querySelectorAll('.tab')[3].click();
+          document.getElementById('mcode').value = _mc.toUpperCase();
+          doMonitor();
+        }, 800);
+      }
+    });
+  });
+}
+</script>
+</body>
+</html>
