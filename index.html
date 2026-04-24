@@ -485,11 +485,24 @@ async function delMed(id) {
 // ── DOSES ──────────────────────────────────────────────────────────────────────
 function subscribeToDoses() {
   if (dosesUnsub) dosesUnsub();
+  // Try with orderBy first, fall back if index not ready
   const q = FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',currentUser.uid), FB.orderBy('takenAt','desc'));
   dosesUnsub = FB.onSnapshot(q, snap => {
     doses = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    // Sort client-side as backup
+    doses.sort((a,b) => tsToDate(b.takenAt) - tsToDate(a.takenAt));
     rHome();
-    if (document.getElementById('pg-log').classList.contains('on')) rLog();
+    rLog(); // Always refresh log whenever doses change
+  }, err => {
+    console.error('Doses query error:', err.message);
+    // Fallback: query without orderBy if index missing
+    const qFallback = FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',currentUser.uid));
+    dosesUnsub = FB.onSnapshot(qFallback, snap => {
+      doses = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      doses.sort((a,b) => tsToDate(b.takenAt) - tsToDate(a.takenAt));
+      rHome();
+      rLog();
+    });
   });
 }
 
@@ -713,8 +726,20 @@ async function doMonitor() {
   FB.onSnapshot(FB.query(FB.collection(FB.db,'medicines'), FB.where('uid','==',uid)), snap => {
     tMeds = snap.docs.map(d => ({id:d.id,...d.data()})); redraw();
   });
-  FB.onSnapshot(FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',uid), FB.orderBy('takenAt','desc')), snap => {
-    tDoses = snap.docs.map(d => ({id:d.id,...d.data()})); redraw();
+
+  // Doses for monitor — with fallback if index not ready
+  const dosesQ = FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',uid), FB.orderBy('takenAt','desc'));
+  FB.onSnapshot(dosesQ, snap => {
+    tDoses = snap.docs.map(d => ({id:d.id,...d.data()}));
+    tDoses.sort((a,b) => tsToDate(b.takenAt) - tsToDate(a.takenAt));
+    redraw();
+  }, err => {
+    // Fallback without orderBy
+    FB.onSnapshot(FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',uid)), snap => {
+      tDoses = snap.docs.map(d => ({id:d.id,...d.data()}));
+      tDoses.sort((a,b) => tsToDate(b.takenAt) - tsToDate(a.takenAt));
+      redraw();
+    });
   });
 }
 
