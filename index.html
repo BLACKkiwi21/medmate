@@ -285,6 +285,16 @@ label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bot
         <option value="🩹">🩹 Patch</option>
       </select>
     </div>
+    <div class="fld"><label>Importance level</label>
+      <select id="mpriority">
+        <option value="normal">🟡 Normal — a bit flexible on timing</option>
+        <option value="critical">🔴 Critical — must be taken on time</option>
+        <option value="flexible">🟢 Flexible — any time of day is fine</option>
+      </select>
+    </div>
+    <div id="priority-hint" style="font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:12px;padding:8px 12px;background:var(--sage);border-radius:8px">
+      🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time
+    </div>
     <div style="display:flex;gap:9px;margin-top:4px">
       <button class="btn bo" style="flex:1" onclick="cm('m-add')">Cancel</button>
       <button class="btn bp" style="flex:1" onclick="saveMed()">Add medicine</button>
@@ -444,14 +454,27 @@ async function saveMed() {
   const d = document.getElementById('md').value.trim();
   const t = document.getElementById('mti').value;
   const i = document.getElementById('micon').value;
+  const p = document.getElementById('mpriority').value;
   if (!n||!t) { toast('Please fill in name and time'); return; }
   await FB.addDoc(FB.collection(FB.db,'medicines'), {
-    uid: currentUser.uid, name:n, dose:d, time:t, icon:i, createdAt: FB.serverTimestamp()
+    uid: currentUser.uid, name:n, dose:d, time:t, icon:i, priority:p, createdAt: FB.serverTimestamp()
   });
   cm('m-add');
   ['mn','md','mti'].forEach(id => document.getElementById(id).value = '');
   toast('Medicine added!');
 }
+
+// Update priority hint when dropdown changes
+document.addEventListener('change', e => {
+  if (e.target.id === 'mpriority') {
+    const hints = {
+      critical: '🔴 <b>Critical:</b> Must be taken within 30 mins of scheduled time',
+      normal:   '🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time',
+      flexible: '🟢 <b>Flexible:</b> Can be taken any time during the day'
+    };
+    document.getElementById('priority-hint').innerHTML = hints[e.target.value];
+  }
+});
 
 async function delMed(id) {
   if (!confirm('Remove this medicine?')) return;
@@ -519,21 +542,146 @@ function doseStatus(m) {
   return d < -30 ? 'missed' : d <= 30 ? 'due' : 'upcoming';
 }
 
+async function confirmDose() {
+  const btn = document.getElementById('cbtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  try {
+    const m = meds.find(x => x.id===curMed);
+    const now = new Date();
+    // Calculate timing status
+    let timingStatus = 'on-time';
+    if (m && m.time) {
+      const [h,mn] = m.time.split(':').map(Number);
+      const sched = new Date(); sched.setHours(h,mn,0,0);
+      const diffMins = (now - sched) / 60000;
+      const window = m.priority === 'critical' ? 30 : m.priority === 'flexible' ? 999 : 60;
+      if (diffMins < -window) timingStatus = 'early';
+      else if (diffMins > window) timingStatus = 'late';
+      else timingStatus = 'on-time';
+    }
+    await FB.addDoc(FB.collection(FB.db,'doses'), {
+      uid: currentUser.uid,
+      medId: curMed,
+      medName: m ? m.name : '',
+      medIcon: m ? m.icon : '💊',
+      medTime: m ? m.time : '',
+      medPriority: m ? (m.priority || 'normal') : 'normal',
+      photo: capData,
+      timingStatus,
+      takenAt: FB.serverTimestamp()
+    });
+    closeDose();
+    toast('✅ Dose marked as taken!');
+  } catch(e) {
+    console.error('confirmDose error:', e);
+    document.getElementById('aibox').innerHTML = `<div class="ais no">⚠️ Failed to save: ${e.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = '✓ Mark as taken';
+  }
+}
+
 // ── LOG ────────────────────────────────────────────────────────────────────────
 function rLog() {
   const el = document.getElementById('log-list');
-  if (!doses.length) { el.innerHTML='<div class="es"><div class="ei">📋</div>No doses logged yet</div>'; return; }
-  el.innerHTML = doses.map(d => {
-    const m = meds.find(x => x.id===d.medId);
-    const t = tsToDate(d.takenAt);
-    const lbl = t.toLocaleDateString('en-MY',{weekday:'short',month:'short',day:'numeric'}) + ' · ' +
-                t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'});
-    return `<div class="dr">
-      <div class="dth">${d.photo ? `<img src="${d.photo}"/>` : (m?m.icon:'💊')}</div>
-      <div style="flex:1"><div class="dnm">${m?m.name:d.medName}</div><div class="dtm">${lbl}</div></div>
-      <span class="badge bg">✓ Verified</span>
-    </div>`;
-  }).join('');
+  if (!doses.length && !meds.length) {
+    el.innerHTML = '<div class="es"><div class="ei">📋</div>No doses logged yet</div>';
+    return;
+  }
+
+  const tod = new Date().toDateString();
+
+  // Group doses by medicine
+  let html = '';
+
+  // Show each medicine with its history
+  meds.forEach(m => {
+    const medDoses = doses.filter(d => d.medId === m.id);
+    const todayDose = medDoses.find(d => tsToDate(d.takenAt).toDateString() === tod);
+    const priority = m.priority || 'normal';
+    const pColor = { critical:'var(--red)', normal:'var(--warn)', flexible:'var(--mint)' }[priority];
+    const pLabel = { critical:'🔴 Critical', normal:'🟡 Normal', flexible:'🟢 Flexible' }[priority];
+
+    html += `<div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:42px;height:42px;border-radius:12px;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${m.icon}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:15px">${m.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${m.dose || ''} · Scheduled ${m.time}</div>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:${pColor}">${pLabel}</span>
+      </div>
+      <div style="height:1px;background:var(--border);margin-bottom:10px"></div>`;
+
+    // Today's status
+    html += `<div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Today</div>`;
+    if (todayDose) {
+      const t = tsToDate(todayDose.takenAt);
+      const timeStr = t.toLocaleTimeString('en-MY', {hour:'2-digit', minute:'2-digit'});
+      const ts = todayDose.timingStatus || 'on-time';
+      const tsColor = {early:'var(--mint)', 'on-time':'var(--mint)', late:'var(--warn)'}[ts];
+      const tsLabel = {early:'⚡ Taken early', 'on-time':'✅ On time', late:'⏰ Taken late'}[ts];
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--mint-bg);border-radius:10px;margin-bottom:10px">
+        ${todayDose.photo ? `<img src="${todayDose.photo}" style="width:44px;height:44px;border-radius:9px;object-fit:cover;flex-shrink:0"/>` : `<div style="width:44px;height:44px;border-radius:9px;background:var(--white);display:flex;align-items:center;justify-content:center;font-size:20px">${m.icon}</div>`}
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">Taken at ${timeStr}</div>
+          <div style="font-size:11px;color:var(--muted)">Scheduled ${m.time}</div>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:${tsColor}">${tsLabel}</span>
+      </div>`;
+    } else {
+      const now = new Date();
+      const [h,mn] = m.time.split(':').map(Number), s = new Date(); s.setHours(h,mn,0,0);
+      const isPast = s < now;
+      html += `<div style="padding:10px;background:${isPast?'#fdf0f0':'var(--sage)'};border-radius:10px;margin-bottom:10px;font-size:13px;color:${isPast?'var(--red)':'var(--muted)'}">
+        ${isPast ? '❌ Missed today' : `⏳ Scheduled for ${m.time}`}
+      </div>`;
+    }
+
+    // Past doses history (last 7)
+    const pastDoses = medDoses.filter(d => tsToDate(d.takenAt).toDateString() !== tod).slice(0,7);
+    if (pastDoses.length) {
+      html += `<div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">History</div>`;
+      pastDoses.forEach(d => {
+        const t = tsToDate(d.takenAt);
+        const dateStr = t.toLocaleDateString('en-MY', {weekday:'short', month:'short', day:'numeric'});
+        const timeStr = t.toLocaleTimeString('en-MY', {hour:'2-digit', minute:'2-digit'});
+        const ts = d.timingStatus || 'on-time';
+        const tsColor = {early:'var(--mint)', 'on-time':'var(--mint)', late:'var(--warn)'}[ts];
+        const tsLabel = {early:'Early', 'on-time':'On time', late:'Late'}[ts];
+        html += `<div class="dr">
+          ${d.photo ? `<div class="dth"><img src="${d.photo}"/></div>` : `<div class="dth">${m.icon}</div>`}
+          <div style="flex:1">
+            <div class="dnm">${dateStr}</div>
+            <div class="dtm">Taken at ${timeStr} · Scheduled ${d.medTime || m.time}</div>
+          </div>
+          <span class="badge" style="background:var(--mint-bg);color:${tsColor}">${tsLabel}</span>
+        </div>`;
+      });
+    }
+
+    html += `</div>`;
+  });
+
+  // Also show any doses for deleted medicines
+  const orphanDoses = doses.filter(d => !meds.find(m => m.id === d.medId));
+  if (orphanDoses.length) {
+    html += `<div class="card">
+      <div class="ct">Other doses</div>`;
+    orphanDoses.slice(0,5).forEach(d => {
+      const t = tsToDate(d.takenAt);
+      const lbl = t.toLocaleDateString('en-MY',{weekday:'short',month:'short',day:'numeric'}) + ' · ' + t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'});
+      html += `<div class="dr">
+        <div class="dth">${d.photo ? `<img src="${d.photo}"/>` : '💊'}</div>
+        <div style="flex:1"><div class="dnm">${d.medName||'Unknown'}</div><div class="dtm">${lbl}</div></div>
+        <span class="badge bg">✓</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!html) html = '<div class="es"><div class="ei">📋</div>No medicines added yet</div>';
+  el.innerHTML = html;
 }
 
 // ── FAMILY ─────────────────────────────────────────────────────────────────────
