@@ -47,120 +47,139 @@ window.dispatchEvent(new Event('fbready'));
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --mint:#3aaa7a;--mint-bg:#e8f5f0;--mint-mid:#b2dece;
-  --sage:#f4f7f5;--text:#1a2620;--muted:#6b7e76;
-  --border:#dde8e3;--white:#fff;--red:#e05252;--warn:#e08c3a;
-  --r:18px;--pr:100px
+  --sage:#f0f7f4;--text:#0f2118;--muted:#5a7268;
+  --border:#d8e8e2;--white:#ffffff;--red:#e05252;--warn:#e08c3a;
+  --card-shadow:0 2px 12px rgba(0,0,0,.06);
+  --r:16px;--pr:100px;
+  --nav-h:58px;
 }
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--sage);color:var(--text);min-height:100vh}
+[data-theme="dark"]{
+  --mint:#4ec88e;--mint-bg:#0e2b1e;--mint-mid:#1e4d36;
+  --sage:#0a1610;--text:#e8f5f0;--muted:#7aad96;
+  --border:#1e3829;--white:#111f18;--red:#ff6b6b;--warn:#ffaa5a;
+  --card-shadow:0 2px 12px rgba(0,0,0,.3);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--sage);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
 
 /* AUTH */
-#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.auth-box{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:32px;width:100%;max-width:400px}
-.auth-logo{font-family:'DM Serif Display',serif;font-size:28px;color:var(--mint);text-align:center;margin-bottom:4px}
-.auth-sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:26px}
-.auth-toggle{text-align:center;font-size:13px;color:var(--muted);margin-top:14px}
-.auth-toggle span{color:var(--mint);cursor:pointer;font-weight:500}
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,var(--mint-bg) 0%,var(--sage) 100%)}
+.auth-box{background:var(--white);border-radius:24px;border:1px solid var(--border);padding:36px;width:100%;max-width:400px;box-shadow:var(--card-shadow)}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:30px;color:var(--mint);text-align:center;margin-bottom:4px}
+.auth-tagline{text-align:center;font-size:12px;color:var(--muted);margin-bottom:28px}
+.auth-sub{text-align:center;font-size:16px;font-weight:600;color:var(--text);margin-bottom:20px}
+.auth-toggle{text-align:center;font-size:13px;color:var(--muted);margin-top:16px}
+.auth-toggle span{color:var(--mint);cursor:pointer;font-weight:600}
 .auth-err{background:#fdf0f0;border:1px solid #f5c6c6;border-radius:10px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px;display:none}
 
-/* APP */
+/* NAV */
 #app-screen{display:none}
-.nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 14px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;gap:8px}
-.logo{font-family:'DM Serif Display',serif;font-size:18px;color:var(--mint);flex-shrink:0}
-.tabs{display:flex;gap:2px}
-.tab{padding:5px 11px;border-radius:var(--pr);font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;white-space:nowrap}
-.tab.on{background:var(--mint-bg);color:var(--mint)}
-.nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.uchip{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+.nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:var(--nav-h);position:sticky;top:0;z-index:100;gap:8px;box-shadow:0 1px 8px rgba(0,0,0,.05)}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--mint);flex-shrink:0;letter-spacing:-.3px}
+.tabs{display:flex;gap:2px;background:var(--sage);border-radius:var(--pr);padding:3px}
+.tab{padding:6px 13px;border-radius:var(--pr);font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;white-space:nowrap}
+.tab.on{background:var(--white);color:var(--mint);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.uchip{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis}
+.dark-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--sage);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:all .2s}
+.dark-btn:hover{background:var(--mint-bg)}
 
 /* PAGES */
-.page{display:none;padding:18px;max-width:520px;margin:0 auto}
+.page{display:none;padding:18px;max-width:520px;margin:0 auto;padding-bottom:32px}
 .page.on{display:block}
-.ph{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:3px}
-.ps{font-size:12px;color:var(--muted);margin-bottom:18px}
+.ph{font-family:'DM Serif Display',serif;font-size:26px;margin-bottom:3px;line-height:1.2}
+.ps{font-size:12px;color:var(--muted);margin-bottom:20px}
 
-/* CARD */
-.card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:12px}
-.ct{font-weight:600;font-size:14px;margin-bottom:12px}
+/* CARDS */
+.card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:12px;box-shadow:var(--card-shadow);transition:background .3s,border .3s}
+.ct{font-weight:700;font-size:14px;margin-bottom:12px;color:var(--text)}
 
 /* FORM */
-input,select{width:100%;border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-family:inherit;font-size:13px;color:var(--text);background:var(--sage);outline:none;transition:border .2s}
-input:focus,select:focus{border-color:var(--mint);background:var(--white)}
-label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px}
-.fld{margin-bottom:12px}
+input,select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13px;color:var(--text);background:var(--sage);outline:none;transition:all .2s}
+input:focus,select:focus{border-color:var(--mint);background:var(--white);box-shadow:0 0 0 3px var(--mint-bg)}
+label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.fld{margin-bottom:14px}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 18px;border-radius:var(--pr);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .2s}
-.bp{background:var(--mint);color:#fff;width:100%}.bp:hover{background:#2e9068}.bp:disabled{background:var(--mint-mid);cursor:default}
-.bo{background:transparent;border:1px solid var(--border);color:var(--text)}.bo:hover{background:var(--sage)}
-.bd{background:#fdf0f0;color:var(--red);border:1px solid #f5c6c6}
-.sm{padding:6px 12px;font-size:11px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 20px;border-radius:var(--pr);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;letter-spacing:.1px}
+.bp{background:var(--mint);color:#fff;width:100%;box-shadow:0 2px 8px rgba(58,170,122,.3)}.bp:hover{background:#2e9068;transform:translateY(-1px)}.bp:disabled{background:var(--mint-mid);cursor:default;transform:none;box-shadow:none}
+.bo{background:transparent;border:1.5px solid var(--border);color:var(--text)}.bo:hover{background:var(--sage);border-color:var(--mint)}
+.bd{background:transparent;color:var(--red);border:1.5px solid #f5c6c6}.bd:hover{background:#fdf0f0}
+.bnudge{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;box-shadow:0 2px 8px rgba(102,126,234,.35)}.bnudge:hover{opacity:.9;transform:translateY(-1px)}
+.sm{padding:7px 13px;font-size:11px}
 
 /* BADGES */
-.badge{display:inline-block;padding:3px 9px;border-radius:var(--pr);font-size:11px;font-weight:600}
+.badge{display:inline-block;padding:3px 10px;border-radius:var(--pr);font-size:11px;font-weight:600}
 .bg{background:var(--mint-bg);color:var(--mint)}.br{background:#fdf0f0;color:var(--red)}
 .bw{background:#fef6ed;color:var(--warn)}.bx{background:var(--sage);color:var(--muted)}
 
 /* MED ITEM */
-.mi{display:flex;align-items:center;gap:10px;padding:13px 15px;background:var(--white);border:1px solid var(--border);border-radius:14px;margin-bottom:9px}
-.mico{width:38px;height:38px;border-radius:10px;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
-.mnm{font-weight:600;font-size:13px}.msb{font-size:11px;color:var(--muted);margin-top:2px}
+.mi{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--white);border:1.5px solid var(--border);border-radius:16px;margin-bottom:10px;box-shadow:var(--card-shadow);transition:all .2s}
+.mi:hover{border-color:var(--mint-mid);transform:translateY(-1px)}
+.mico{width:42px;height:42px;border-radius:12px;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.mnm{font-weight:700;font-size:14px}.msb{font-size:11px;color:var(--muted);margin-top:2px}
 .mac{display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-left:auto}
 
 /* DOSE ROW */
-.dr{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
+.dr{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
 .dr:last-child{border-bottom:none}
-.dth{width:42px;height:42px;border-radius:9px;background:var(--sage);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden}
-.dth img{width:42px;height:42px;border-radius:9px;object-fit:cover}
+.dth{width:44px;height:44px;border-radius:10px;background:var(--sage);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
+.dth img{width:44px;height:44px;border-radius:10px;object-fit:cover}
 .dnm{font-size:13px;font-weight:600}.dtm{font-size:11px;color:var(--muted)}
 
-/* CAMERA */
-.cw{width:100%;border-radius:13px;overflow:hidden;background:#111;aspect-ratio:4/3}
-#cv{width:100%;height:100%;object-fit:cover}
-
 /* MODAL */
-.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px}
+.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .mb.op{display:flex}
-.mo{background:var(--white);border-radius:var(--r);padding:22px;width:100%;max-width:420px;max-height:92vh;overflow-y:auto}
-.mt{font-family:'DM Serif Display',serif;font-size:21px;margin-bottom:3px}
-.ms{font-size:12px;color:var(--muted);margin-bottom:16px}
+.mo{background:var(--white);border-radius:24px;padding:24px;width:100%;max-width:420px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.mt{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:4px}
+.ms{font-size:12px;color:var(--muted);margin-bottom:18px}
 
 /* TOAST */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:9px 20px;border-radius:var(--pr);font-size:12px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--white);padding:10px 22px;border-radius:var(--pr);font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
 /* ALERT */
-.ab{background:#fef6ed;border:1px solid #f5d7b0;border-radius:11px;padding:11px 14px;font-size:12px;color:var(--warn);font-weight:500;margin-bottom:12px}
+.ab{background:#fef6ed;border:1px solid #f5d7b0;border-radius:12px;padding:12px 16px;font-size:13px;color:var(--warn);font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 
 /* FRIENDS */
-.fi{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.fi{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
 .fi:last-child{border-bottom:none}
-.fav{width:34px;height:34px;border-radius:50%;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--mint);margin-right:9px;flex-shrink:0}
+.fav{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--mint),#2e9068);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;margin-right:10px;flex-shrink:0}
 
 /* CODE */
-.cb{background:var(--sage);border:1px dashed var(--border);border-radius:10px;padding:11px;text-align:center;font-size:22px;font-weight:700;letter-spacing:5px;color:var(--mint);cursor:pointer;user-select:all}
+.cb{background:var(--sage);border:2px dashed var(--mint-mid);border-radius:12px;padding:14px;text-align:center;font-size:24px;font-weight:700;letter-spacing:6px;color:var(--mint);cursor:pointer;user-select:all;transition:all .2s}
+.cb:hover{background:var(--mint-bg);border-color:var(--mint)}
 
 /* AI STATUS */
-.ais{border-radius:11px;padding:12px;font-size:12px;margin-top:8px}
+.ais{border-radius:12px;padding:13px;font-size:13px;margin-top:8px;font-weight:500}
 .ais.chk{background:#f0f4fe;color:#3a5fd8}
 .ais.ok{background:var(--mint-bg);color:var(--mint)}
 .ais.no{background:#fdf0f0;color:var(--red)}
 
 /* MONITOR */
-.mhdr{background:linear-gradient(135deg,var(--mint-bg),#d2ede4);border-radius:var(--r);padding:18px;margin-bottom:12px}
-.sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
-.sb{background:var(--white);border-radius:10px;padding:10px;text-align:center}
-.sn{font-size:20px;font-weight:700;color:var(--mint)}.sl{font-size:10px;color:var(--muted);margin-top:1px}
-.sd{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
-.dot{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+.mhdr{background:linear-gradient(135deg,var(--mint) 0%,#2e9068 100%);border-radius:var(--r);padding:20px;margin-bottom:14px;color:#fff}
+.sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+.sb{background:rgba(255,255,255,.2);border-radius:12px;padding:12px;text-align:center;backdrop-filter:blur(4px)}
+.sn{font-size:22px;font-weight:700;color:#fff}.sl{font-size:10px;color:rgba(255,255,255,.8);margin-top:2px}
+.sd{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
 .tk{background:var(--mint-bg);color:var(--mint)}.mk{background:#fdf0f0;color:var(--red)}.ft{background:var(--sage);color:var(--muted)}
 
+/* NUDGE */
+.nudge-box{background:linear-gradient(135deg,#667eea15,#764ba215);border:1.5px solid #667eea30;border-radius:14px;padding:16px;margin-top:12px}
+.nudge-history{max-height:120px;overflow-y:auto;margin-top:10px}
+.nudge-item{font-size:11px;color:var(--muted);padding:5px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.nudge-item:last-child{border-bottom:none}
+
 /* MISC */
-.es{text-align:center;padding:36px 16px;color:var(--muted);font-size:13px}
-.ei{font-size:32px;margin-bottom:8px}
+.es{text-align:center;padding:40px 16px;color:var(--muted);font-size:13px}
+.ei{font-size:36px;margin-bottom:10px}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--mint-mid);border-top-color:var(--mint);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-.live-dot{width:8px;height:8px;border-radius:50%;background:var(--mint);display:inline-block;margin-right:5px;animation:pulse 1.5s ease infinite}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#4ec88e;display:inline-block;margin-right:5px;animation:pulse 1.5s ease infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.section-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:18px 0 8px}
+.stat-pill{display:inline-flex;align-items:center;gap:5px;background:var(--mint-bg);border-radius:var(--pr);padding:5px 12px;font-size:12px;font-weight:600;color:var(--mint)}
 </style>
 </head>
 <body>
@@ -195,8 +214,9 @@ label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bot
       <button class="tab"    onclick="go('monitor',this)">Monitor</button>
     </div>
     <div class="nav-right">
+      <button class="dark-btn" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
       <span class="uchip" id="uchip"></span>
-      <button class="btn bo sm" onclick="doSignOut()">Sign out</button>
+      <button class="btn bo sm" onclick="doSignOut()">Out</button>
     </div>
   </nav>
 
@@ -353,6 +373,7 @@ window.addEventListener('fbready', () => {
       subscribeToDoses();
       loadFriends();
       scheduleReminders();
+      listenForNudges();
     } else {
       currentUser = null;
       document.getElementById('auth-screen').style.display = 'flex';
@@ -748,52 +769,92 @@ function renderDash(user, tMeds, tDoses, el) {
   const taken = tMeds.filter(m => tDoses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod)).length;
   const total = tMeds.length, missed = total - taken, streak = calcStreak(tDoses);
   const recent = tDoses.slice(0,5);
+  const targetUid = user.uid;
 
   el.innerHTML = `
     <div class="mhdr">
-      <div style="font-family:'DM Serif Display',serif;font-size:19px">📊 ${user.name}'s Dashboard</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:3px"><span class="live-dot"></span>Live — updates automatically</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:13px;opacity:.8;margin-bottom:4px"><span class="live-dot"></span>Live updates</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff">${user.name}'s Progress</div>
+        </div>
+        <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:22px">
+          ${user.name?.[0]?.toUpperCase() || '👤'}
+        </div>
+      </div>
       <div class="sg">
-        <div class="sb"><div class="sn">${taken}</div><div class="sl">Taken today</div></div>
-        <div class="sb"><div class="sn" style="color:${missed>0?'var(--red)':'var(--mint)'}">${missed}</div><div class="sl">Missed today</div></div>
-        <div class="sb"><div class="sn">${streak}</div><div class="sl">Streak 🔥</div></div>
+        <div class="sb"><div class="sn">${taken}/${total}</div><div class="sl">Taken today</div></div>
+        <div class="sb"><div class="sn" style="color:${missed>0?'#ffaa5a':'#fff'}">${missed}</div><div class="sl">Missed</div></div>
+        <div class="sb"><div class="sn">${streak}</div><div class="sl">🔥 Streak</div></div>
       </div>
     </div>
+
     ${missed > 0
       ? `<div class="ab">⚠️ ${user.name} has ${missed} missed dose${missed>1?'s':''} today!</div>`
       : total > 0
-        ? `<div style="background:var(--mint-bg);border-radius:10px;padding:10px;text-align:center;font-size:13px;color:var(--mint);font-weight:600;margin-bottom:12px">✅ All doses taken today</div>`
+        ? `<div style="background:var(--mint-bg);border-radius:12px;padding:12px;text-align:center;font-size:13px;color:var(--mint);font-weight:600;margin-bottom:14px">✅ All doses taken today — great job!</div>`
         : ''}
-    <div class="card">
+
+    <!-- NUDGE SECTION -->
+    <div class="nudge-box">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">💬 Send a nudge</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Send a friendly reminder to ${user.name} to take their medicine</div>
+      <div style="display:flex;gap-8px;flex-direction:column;gap:8px">
+        <select id="nudge-msg" style="font-size:13px">
+          <option value="Hey! Don't forget to take your medicine 💊">Hey! Don't forget to take your medicine 💊</option>
+          <option value="Time to take your meds! Stay healthy 🌿">Time to take your meds! Stay healthy 🌿</option>
+          <option value="Quick reminder — medicine time! ⏰">Quick reminder — medicine time! ⏰</option>
+          <option value="We care about you! Please take your medicine 💙">We care about you! Please take your medicine 💙</option>
+        </select>
+        <button class="btn bnudge" style="margin-top:8px" onclick="sendNudge('${targetUid}','${user.name}')">
+          Send nudge 👋
+        </button>
+      </div>
+      <div id="nudge-history-${targetUid}" class="nudge-history"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
       <div class="ct">This week</div>
       <div class="sd">${buildDots(tDoses)}</div>
     </div>
+
     <div class="card">
       <div class="ct">Medicines</div>
       ${tMeds.length ? tMeds.map(m => {
         const tk = tDoses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
-        return `<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:18px">${m.icon}</span>
-          <div style="flex:1"><div style="font-size:13px;font-weight:600">${m.name}</div><div style="font-size:11px;color:var(--muted)">${m.dose||''} · ${m.time}</div></div>
+        const priority = m.priority || 'normal';
+        const pLabel = {critical:'🔴',normal:'🟡',flexible:'🟢'}[priority];
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:20px">${m.icon}</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${m.name} ${pLabel}</div>
+            <div style="font-size:11px;color:var(--muted)">${m.dose||''} · ${m.time}</div>
+          </div>
           <span class="badge ${tk?'bg':'br'}">${tk?'✓ Taken':'Not yet'}</span>
         </div>`;
-      }).join('') : '<div style="font-size:13px;color:var(--muted);padding:8px 0">No medicines set up</div>'}
+      }).join('') : '<div style="font-size:13px;color:var(--muted)">No medicines set up</div>'}
     </div>
+
     <div class="card">
       <div class="ct">Recent doses</div>
       ${recent.length ? recent.map(d => {
         const m = tMeds.find(x => x.id===d.medId);
         const t = tsToDate(d.takenAt);
+        const ts = d.timingStatus || 'on-time';
+        const tsLabel = {early:'⚡ Early','on-time':'✅ On time',late:'⏰ Late'}[ts];
         return `<div class="dr">
-          <div class="dth">${d.photo ? `<img src="${d.photo}"/>` : (m?m.icon:'💊')}</div>
+          <div class="dth">${d.photo?`<img src="${d.photo}"/>`:(m?m.icon:'💊')}</div>
           <div style="flex:1">
             <div class="dnm">${m?m.name:d.medName}</div>
             <div class="dtm">${t.toLocaleDateString('en-MY',{month:'short',day:'numeric'})} · ${t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})}</div>
           </div>
-          <span class="badge bg">✓</span>
+          <span class="badge bg">${tsLabel}</span>
         </div>`;
-      }).join('') : '<div class="es" style="padding:14px 0">No doses yet</div>'}
+      }).join('') : '<div class="es" style="padding:14px 0">No doses recorded yet</div>'}
     </div>`;
+
+  // Load nudge history
+  loadNudgeHistory(targetUid);
 }
 
 function calcStreak(doseList) {
@@ -969,8 +1030,94 @@ function toast(msg) {
   setTimeout(()=>e.classList.remove('show'),2600);
 }
 
-// ── NOTIFICATIONS ──────────────────────────────────────────────────────────────
-function scheduleReminders() {
+// ── DARK MODE ─────────────────────────────────────────────────────────────────
+function toggleDark() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('dark-btn').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('medmate_theme', isDark ? 'light' : 'dark');
+}
+// Load saved theme
+const savedTheme = localStorage.getItem('medmate_theme');
+if (savedTheme) {
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('dark-btn');
+    if (btn) btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+  });
+}
+
+// ── NUDGE ─────────────────────────────────────────────────────────────────────
+async function sendNudge(targetUid, targetName) {
+  const msg = document.getElementById('nudge-msg').value;
+  const senderName = currentUser.displayName || currentUser.email.split('@')[0];
+  try {
+    await FB.addDoc(FB.collection(FB.db,'nudges'), {
+      toUid: targetUid,
+      fromUid: currentUser.uid,
+      fromName: senderName,
+      message: msg,
+      sentAt: FB.serverTimestamp(),
+      read: false
+    });
+    toast(`👋 Nudge sent to ${targetName}!`);
+    loadNudgeHistory(targetUid);
+  } catch(e) {
+    toast('Failed to send nudge');
+    console.error(e);
+  }
+}
+
+async function loadNudgeHistory(targetUid) {
+  const el = document.getElementById(`nudge-history-${targetUid}`);
+  if (!el) return;
+  try {
+    const q = FB.query(FB.collection(FB.db,'nudges'), FB.where('toUid','==',targetUid));
+    FB.onSnapshot(q, snap => {
+      if (!snap.docs.length) { el.innerHTML = ''; return; }
+      const nudges = snap.docs.map(d=>({...d.data()}))
+        .sort((a,b) => tsToDate(b.sentAt) - tsToDate(a.sentAt))
+        .slice(0,5);
+      el.innerHTML = `<div class="section-label" style="margin-top:10px">Recent nudges</div>` +
+        nudges.map(n => {
+          const t = tsToDate(n.sentAt);
+          const timeStr = t.toLocaleDateString('en-MY',{month:'short',day:'numeric'}) + ' ' +
+                          t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'});
+          return `<div class="nudge-item">
+            <span>${n.fromName}: "${n.message}"</span>
+            <span style="flex-shrink:0;margin-left:8px">${timeStr}</span>
+          </div>`;
+        }).join('');
+    });
+  } catch(e) { console.error('loadNudgeHistory:', e); }
+}
+
+// ── NUDGE NOTIFICATIONS for the patient ────────────────────────────────────────
+function listenForNudges() {
+  if (!currentUser) return;
+  const q = FB.query(
+    FB.collection(FB.db,'nudges'),
+    FB.where('toUid','==',currentUser.uid),
+    FB.where('read','==',false)
+  );
+  FB.onSnapshot(q, snap => {
+    snap.docChanges().forEach(async change => {
+      if (change.type === 'added') {
+        const n = change.doc.data();
+        // Show in-app toast
+        toast(`💬 ${n.fromName}: ${n.message}`);
+        // Browser notification
+        if (Notification.permission === 'granted') {
+          new Notification(`💊 MedMate — Nudge from ${n.fromName}`, { body: n.message });
+        }
+        // Mark as read
+        try {
+          await FB.updateDoc(FB.doc(FB.db,'nudges',change.doc.id), { read: true });
+        } catch(e) {}
+      }
+    });
+  });
+}
   if ('Notification' in window && Notification.permission==='default') Notification.requestPermission();
   setInterval(() => {
     if (!meds.length || Notification.permission!=='granted') return;
