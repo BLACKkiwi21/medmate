@@ -1118,6 +1118,9 @@ function listenForNudges() {
     });
   });
 }
+
+// ── NOTIFICATIONS ──────────────────────────────────────────────────────────────
+function scheduleReminders() {
   if ('Notification' in window && Notification.permission==='default') Notification.requestPermission();
   setInterval(() => {
     if (!meds.length || Notification.permission!=='granted') return;
