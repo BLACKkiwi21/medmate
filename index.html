@@ -186,19 +186,36 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
 
 <!-- ══════════ AUTH SCREEN ══════════ -->
 <div id="auth-screen">
-  <div class="auth-box">
-    <div class="auth-logo">💊 MedMate</div>
-    <div class="auth-sub" id="auth-subtitle">Sign in to your account</div>
-    <div class="auth-err" id="auth-err"></div>
-    <div id="name-wrap" class="fld" style="display:none">
-      <label>Your name</label>
-      <input id="a-name" placeholder="e.g. Ahmad"/>
-    </div>
-    <div class="fld"><label>Email</label><input type="email" id="a-email" placeholder="you@example.com"/></div>
-    <div class="fld"><label>Password</label><input type="password" id="a-pass" placeholder="Min. 6 characters"/></div>
-    <button class="btn bp" id="auth-btn" onclick="doAuth()">Sign in</button>
-    <div class="auth-toggle" id="auth-toggle">
-      No account? <span onclick="toggleAuth()">Create one</span>
+  <!-- Loading spinner -->
+  <div id="auth-loading" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+    <div style="width:48px;height:48px;border:3px solid var(--mint-mid);border-top-color:var(--mint);border-radius:50%;animation:spin .7s linear infinite"></div>
+    <div style="font-size:14px;color:var(--muted)">Loading MedMate...</div>
+  </div>
+  <!-- Auth box -->
+  <div id="auth-box" style="display:none;width:100%;max-width:400px">
+    <div class="auth-box">
+      <div class="auth-logo">💊 MedMate</div>
+      <div class="auth-tagline">Your smart medicine companion</div>
+      <!-- Saved accounts on this device -->
+      <div id="saved-accounts"></div>
+      <div id="accounts-divider" style="display:none;height:1px;background:var(--border);margin:16px 0;position:relative">
+        <span style="position:absolute;left:50%;transform:translateX(-50%);top:-9px;background:var(--white);padding:0 10px;font-size:11px;color:var(--muted)">or sign in with email</span>
+      </div>
+      <!-- Sign in form -->
+      <div id="auth-form">
+        <div class="auth-sub" id="auth-subtitle">Sign in to your account</div>
+        <div class="auth-err" id="auth-err" style="display:none"></div>
+        <div id="name-wrap" class="fld" style="display:none">
+          <label>Your name</label>
+          <input id="a-name" placeholder="e.g. Ahmad"/>
+        </div>
+        <div class="fld"><label>Email</label><input type="email" id="a-email" placeholder="you@example.com"/></div>
+        <div class="fld"><label>Password</label><input type="password" id="a-pass" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter')doAuth()"/></div>
+        <button class="btn bp" id="auth-btn" onclick="doAuth()">Sign in</button>
+        <div class="auth-toggle" id="auth-toggle">
+          No account? <span onclick="toggleAuth()">Create one</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -212,11 +229,10 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
       <button class="tab"    onclick="go('log',this)">Log</button>
       <button class="tab"    onclick="go('family',this)">Family</button>
       <button class="tab"    onclick="go('monitor',this)">Monitor</button>
+      <button class="tab"    onclick="go('settings',this)">⚙️</button>
     </div>
     <div class="nav-right">
-      <button class="dark-btn" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
       <span class="uchip" id="uchip"></span>
-      <button class="btn bo sm" onclick="doSignOut()">Out</button>
     </div>
   </nav>
 
@@ -283,6 +299,152 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
         <button class="btn bp" onclick="doMonitor()">View live dashboard</button>
       </div>
       <div id="mdash" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="pg-settings">
+    <div style="padding-top:16px">
+      <div class="ph">Settings</div>
+      <div class="ps">Manage your account and preferences</div>
+
+      <!-- PROFILE CARD -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+          <div id="settings-avatar" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--mint),#2e9068);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0">?</div>
+          <div>
+            <div id="settings-name" style="font-size:16px;font-weight:700"></div>
+            <div id="settings-email" style="font-size:12px;color:var(--muted);margin-top:2px"></div>
+            <div id="settings-code" style="font-size:11px;color:var(--mint);margin-top:2px;font-weight:600"></div>
+          </div>
+        </div>
+        <div class="fld"><label>Display name</label><input id="s-name" placeholder="Your name"/></div>
+        <button class="btn bp" onclick="updateName()">Update name</button>
+      </div>
+
+      <!-- APPEARANCE -->
+      <div class="section-label">Appearance</div>
+      <div class="card" style="padding:0">
+        <div onclick="toggleDark()" style="display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:18px">🌙</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Dark mode</div>
+              <div style="font-size:11px;color:var(--muted)" id="dark-mode-label">Currently off</div>
+            </div>
+          </div>
+          <div id="dark-toggle" style="width:44px;height:24px;border-radius:100px;background:var(--border);position:relative;transition:background .3s;cursor:pointer">
+            <div id="dark-knob" style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:all .3s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="section-label">Notifications</div>
+      <div class="card" style="padding:0">
+        <div onclick="requestNotifPermission()" style="display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:10px;background:#fef6ed;display:flex;align-items:center;justify-content:center;font-size:18px">🔔</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Medicine reminders</div>
+              <div style="font-size:11px;color:var(--muted)" id="notif-label">Tap to enable</div>
+            </div>
+          </div>
+          <span class="badge" id="notif-badge" style="background:var(--sage);color:var(--muted)">Off</span>
+        </div>
+      </div>
+
+      <!-- DATA MANAGEMENT -->
+      <div class="section-label">Data</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div onclick="confirmClear('doses')" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:10px;background:#fef6ed;display:flex;align-items:center;justify-content:center;font-size:18px">📋</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">Clear dose logs</div>
+            <div style="font-size:11px;color:var(--muted)">Delete all recorded doses</div>
+          </div>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+        <div onclick="confirmClear('medicines')" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:10px;background:#fef6ed;display:flex;align-items:center;justify-content:center;font-size:18px">💊</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">Clear medicines</div>
+            <div style="font-size:11px;color:var(--muted)">Delete all your medicines</div>
+          </div>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+        <div onclick="confirmClear('nudges')" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:10px;background:#fef6ed;display:flex;align-items:center;justify-content:center;font-size:18px">💬</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">Clear nudges</div>
+            <div style="font-size:11px;color:var(--muted)">Delete all nudge messages</div>
+          </div>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+        <div onclick="confirmClear('all')" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer">
+          <div style="width:36px;height:36px;border-radius:10px;background:#fdf0f0;display:flex;align-items:center;justify-content:center;font-size:18px">🗑️</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;color:var(--red)">Clear all data</div>
+            <div style="font-size:11px;color:var(--muted)">Fresh start — keeps your account</div>
+          </div>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+      </div>
+
+      <!-- SECURITY -->
+      <div class="section-label">Security</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div onclick="openChangePass()" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:10px;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:18px">🔑</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">Change password</div>
+            <div style="font-size:11px;color:var(--muted)">Update your login password</div>
+          </div>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+        <div onclick="doSignOut()" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:10px;background:var(--sage);display:flex;align-items:center;justify-content:center;font-size:18px">🚪</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">Sign out</div>
+            <div style="font-size:11px;color:var(--muted)">Log out of your account</div>
+          </div>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+        <div onclick="confirmDeleteAccount()" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer">
+          <div style="width:36px;height:36px;border-radius:10px;background:#fdf0f0;display:flex;align-items:center;justify-content:center;font-size:18px">❌</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;color:var(--red)">Delete account</div>
+            <div style="font-size:11px;color:var(--muted)">Permanently remove your account and all data</div>
+          </div>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="section-label">About</div>
+      <div class="card" style="text-align:center;padding:24px">
+        <div style="font-size:32px;margin-bottom:8px">💊</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--mint)">MedMate</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Version 1.0 · Built with ❤️</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Your smart medicine companion</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- end app-screen -->
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="mb" id="m-pass">
+  <div class="mo">
+    <div class="mt">Change password</div>
+    <div class="ms">Enter your new password below</div>
+    <div class="fld"><label>New password</label><input type="password" id="new-pass" placeholder="Min. 6 characters"/></div>
+    <div class="fld"><label>Confirm new password</label><input type="password" id="confirm-pass" placeholder="Repeat password"/></div>
+    <div class="status" id="pass-status" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:9px">
+      <button class="btn bo" style="flex:1" onclick="cm('m-pass')">Cancel</button>
+      <button class="btn bp" style="flex:1" onclick="doChangePass()">Update password</button>
     </div>
   </div>
 </div>
@@ -362,9 +524,15 @@ let isSignUp = false;
 
 window.addEventListener('fbready', () => {
   FB = window._fb;
+  // Show loading spinner while Firebase checks existing session
+  document.getElementById('auth-loading').style.display = 'flex';
+  document.getElementById('auth-box').style.display = 'none';
+
   FB.onAuthStateChanged(FB.auth, user => {
+    document.getElementById('auth-loading').style.display = 'none';
     if (user) {
       currentUser = user;
+      saveAccountToDevice(user);
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-screen').style.display = 'block';
       document.getElementById('uchip').textContent = user.displayName || user.email.split('@')[0];
@@ -376,13 +544,67 @@ window.addEventListener('fbready', () => {
       listenForNudges();
     } else {
       currentUser = null;
+      document.getElementById('auth-box').style.display = 'block';
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('app-screen').style.display = 'none';
+      renderSavedAccounts();
       if (medsUnsub) medsUnsub();
       if (dosesUnsub) dosesUnsub();
     }
   });
 });
+
+// ── SAVED ACCOUNTS ─────────────────────────────────────────────────────────────
+function getSavedAccounts() {
+  try { return JSON.parse(localStorage.getItem('mm_accounts') || '[]'); } catch(e) { return []; }
+}
+function saveAccountToDevice(user) {
+  const accounts = getSavedAccounts();
+  const existing = accounts.findIndex(a => a.email === user.email);
+  const entry = { email: user.email, name: user.displayName || user.email.split('@')[0], uid: user.uid, lastUsed: Date.now() };
+  if (existing >= 0) accounts[existing] = entry; else accounts.push(entry);
+  localStorage.setItem('mm_accounts', JSON.stringify(accounts));
+}
+function removeAccountFromDevice(email) {
+  const accounts = getSavedAccounts().filter(a => a.email !== email);
+  localStorage.setItem('mm_accounts', JSON.stringify(accounts));
+  renderSavedAccounts();
+}
+function renderSavedAccounts() {
+  const accounts = getSavedAccounts();
+  const el = document.getElementById('saved-accounts');
+  const divider = document.getElementById('accounts-divider');
+  if (!accounts.length) { if(el) el.innerHTML=''; if(divider) divider.style.display='none'; return; }
+  if(divider) divider.style.display='block';
+  if(!el) return;
+  el.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Saved on this device</div>` +
+    accounts.sort((a,b)=>b.lastUsed-a.lastUsed).map(a => {
+      const ini = a.name.split(' ').map(w=>w[0]).join('').toUpperCase().substr(0,2);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--white);transition:border .2s"
+        onmouseover="this.style.borderColor='var(--mint)'" onmouseout="this.style.borderColor='var(--border)'"
+        onclick="quickLogin('${a.email}')">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--mint),#2e9068);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ini}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600">${a.name}</div>
+          <div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.email}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:var(--mint);font-weight:600">Use →</span>
+          <span onclick="event.stopPropagation();removeAccountFromDevice('${a.email}')"
+            style="font-size:18px;color:var(--muted);cursor:pointer;line-height:1"
+            onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">×</span>
+        </div>
+      </div>`;
+    }).join('');
+}
+function quickLogin(email) {
+  document.getElementById('a-email').value = email;
+  document.getElementById('a-pass').value = '';
+  document.getElementById('a-pass').focus();
+  const err = document.getElementById('auth-err');
+  err.textContent = `Enter password for ${email}`;
+  err.style.cssText = 'display:block;background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-mid);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px';
+}
 
 // ── AUTH ───────────────────────────────────────────────────────────────────────
 function toggleAuth() {
@@ -397,17 +619,17 @@ function toggleAuth() {
 }
 
 async function doAuth() {
-  if (!FB) { showAuthErr('Still loading — please wait a moment.'); return; }
+  if (!FB) { showAuthErr('Still loading — please wait.'); return; }
   const email = document.getElementById('a-email').value.trim();
   const pass  = document.getElementById('a-pass').value;
   const name  = document.getElementById('a-name').value.trim();
   if (!email || !pass) { showAuthErr('Please enter your email and password.'); return; }
   const btn = document.getElementById('auth-btn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Please wait...';
+  btn.innerHTML = '<span class="spinner"></span> Signing in...';
   try {
     if (isSignUp) {
-      if (!name) { showAuthErr('Please enter your name.'); reset(); return; }
+      if (!name) { showAuthErr('Please enter your name.'); resetBtn(); return; }
       const cred = await FB.createUserWithEmailAndPassword(FB.auth, email, pass);
       await FB.updateProfile(cred.user, { displayName: name });
       const code = genCode();
@@ -418,11 +640,12 @@ async function doAuth() {
     } else {
       await FB.signInWithEmailAndPassword(FB.auth, email, pass);
     }
+    // onAuthStateChanged handles the rest — no need to resetBtn here
   } catch(e) {
     showAuthErr(authErr(e.code));
-    reset();
+    resetBtn();
   }
-  function reset() {
+  function resetBtn() {
     btn.disabled = false;
     btn.textContent = isSignUp ? 'Create account' : 'Sign in';
   }
@@ -430,7 +653,8 @@ async function doAuth() {
 
 function showAuthErr(msg) {
   const el = document.getElementById('auth-err');
-  el.textContent = msg; el.style.display = 'block';
+  el.textContent = msg;
+  el.style.cssText = 'display:block;background:#fdf0f0;color:var(--red);border:1px solid #f5c6c6;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px';
 }
 function authErr(code) {
   return ({
@@ -440,6 +664,7 @@ function authErr(code) {
     'auth/wrong-password':'Incorrect password.',
     'auth/user-not-found':'No account found for that email.',
     'auth/invalid-credential':'Incorrect email or password.',
+    'auth/too-many-requests':'Too many attempts. Please wait a moment.',
   })[code] || 'Something went wrong. Please try again.';
 }
 async function doSignOut() { await FB.signOut(FB.auth); }
