@@ -254,19 +254,28 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
       <button class="tab"    onclick="go('settings',this)">⚙️</button>
     </div>
     <div class="nav-right">
-      <span class="uchip" id="uchip"></span>
+      <button class="dark-btn" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
     </div>
   </nav>
 
   <!-- HOME -->
   <div class="page on" id="pg-home">
-    <div style="padding-top:16px">
-      <div class="ph" id="greet">Good day 👋</div>
-      <div class="ps">Your medicines for today</div>
-      <div id="alerts"></div>
-      <div id="med-home"></div>
-      <button class="btn bo" style="width:100%;margin-top:6px" onclick="openAdd()">+ Add medicine</button>
+    <!-- Hero header card -->
+    <div style="background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%);border-radius:20px;padding:20px;margin-bottom:16px;margin-top:8px;color:#fff;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
+      <div style="position:absolute;bottom:-30px;right:20px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;position:relative">
+        <div>
+          <div style="font-size:12px;opacity:.75;margin-bottom:3px;font-weight:500">Welcome back</div>
+          <div id="greet" style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;line-height:1.2">Good day 👋</div>
+          <div style="font-size:12px;opacity:.7;margin-top:6px" id="home-date"></div>
+        </div>
+        <div id="home-avatar" style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.3)">?</div>
+      </div>
     </div>
+    <div id="alerts"></div>
+    <div id="med-home"></div>
+    <button class="btn bo" style="width:100%;margin-top:6px" onclick="openAdd()">+ Add medicine</button>
   </div>
 
   <!-- LOG -->
@@ -698,13 +707,35 @@ async function loadUserProfile() {
   if (snap.exists()) {
     const data = snap.data();
     userCode = data.code;
-    document.getElementById('acode').textContent = userCode;
-    document.getElementById('slink').value = location.origin + location.pathname + '?monitor=' + userCode;
+    const el = document.getElementById('acode');
+    if (el) el.textContent = userCode;
+    const sl = document.getElementById('slink');
+    if (sl) sl.value = location.origin + location.pathname + '?monitor=' + userCode;
   }
   const hr = new Date().getHours();
   const g = hr<12 ? 'Good morning' : hr<17 ? 'Good afternoon' : 'Good evening';
   const n = currentUser.displayName || currentUser.email.split('@')[0];
-  document.getElementById('greet').textContent = `${g}, ${n} 👋`;
+  const ini = n.split(' ').map(w=>w[0]).join('').toUpperCase().substr(0,2);
+  // Greeting
+  const greetEl = document.getElementById('greet');
+  if (greetEl) greetEl.textContent = `${g}, ${n} 👋`;
+  // Avatar initials
+  const avatarEl = document.getElementById('home-avatar');
+  if (avatarEl) avatarEl.textContent = ini;
+  // Today's date
+  const dateEl = document.getElementById('home-date');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-MY',{weekday:'long',day:'numeric',month:'long'});
+  // Settings profile
+  const sname = document.getElementById('settings-name');
+  const semail = document.getElementById('settings-email');
+  const scode = document.getElementById('settings-code');
+  const savatar = document.getElementById('settings-avatar');
+  const sInput = document.getElementById('s-name');
+  if (sname) sname.textContent = n;
+  if (semail) semail.textContent = currentUser.email;
+  if (scode && userCode) scode.textContent = `Access code: ${userCode}`;
+  if (savatar) savatar.textContent = ini;
+  if (sInput) sInput.value = n;
 }
 
 // ── MEDICINES ─────────────────────────────────────────────────────────────────
