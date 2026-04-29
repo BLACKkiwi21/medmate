@@ -10,7 +10,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-         signOut, onAuthStateChanged, updateProfile }
+         signOut, onAuthStateChanged, updateProfile, updatePassword, deleteUser }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, onSnapshot,
          query, where, orderBy, deleteDoc, updateDoc, serverTimestamp }
@@ -36,7 +36,7 @@ const db   = getFirestore(app);
 window._fb = {
   auth, db,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, updateProfile,
+  signOut, onAuthStateChanged, updateProfile, updatePassword, deleteUser,
   doc, setDoc, getDoc, collection, addDoc, onSnapshot,
   query, where, orderBy, deleteDoc, updateDoc, serverTimestamp
 };
@@ -1429,6 +1429,113 @@ function scheduleReminders() {
       }
     });
   }, 30000);
+}
+
+// ── SETTINGS FUNCTIONS ────────────────────────────────────────────────────────
+async function updateName() {
+  const n = document.getElementById('s-name').value.trim();
+  if (!n) { toast('Please enter a name'); return; }
+  try {
+    await FB.updateProfile(currentUser, { displayName: n });
+    await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { name: n });
+    loadUserProfile();
+    toast('✅ Name updated!');
+  } catch(e) { toast('Failed to update name'); }
+}
+
+function requestNotifPermission() {
+  if (!('Notification' in window)) { toast('Notifications not supported'); return; }
+  Notification.requestPermission().then(p => {
+    const badge = document.getElementById('notif-badge');
+    const label = document.getElementById('notif-label');
+    if (p === 'granted') {
+      toast('✅ Notifications enabled!');
+      if (badge) { badge.textContent = 'On'; badge.className = 'badge bg'; }
+      if (label) label.textContent = 'Reminders are active';
+    } else {
+      toast('Notifications blocked — enable in browser settings');
+      if (badge) { badge.textContent = 'Blocked'; badge.className = 'badge br'; }
+    }
+  });
+}
+
+async function deleteCollection(colName, field, uid) {
+  const q = FB.query(FB.collection(FB.db, colName), FB.where(field, '==', uid));
+  const snap = await FB.getDoc ? null : null;
+  const s = await new Promise(res => {
+    FB.onSnapshot(q, snap => { res(snap); }, {once: true});
+  }).catch(() => null);
+  // Use getDocs-style via onSnapshot workaround
+  const results = await new Promise(res => {
+    const unsub = FB.onSnapshot(q, snap => { unsub(); res(snap); });
+  });
+  const deletes = results.docs.map(d => FB.deleteDoc(FB.doc(FB.db, colName, d.id)));
+  await Promise.all(deletes);
+  return results.docs.length;
+}
+
+async function confirmClear(type) {
+  const labels = {
+    doses: 'all your dose logs',
+    medicines: 'all your medicines',
+    nudges: 'all nudge messages',
+    all: 'ALL data (doses, medicines and nudges)'
+  };
+  if (!confirm(`Are you sure you want to delete ${labels[type]}? This cannot be undone.`)) return;
+  toast('Clearing...');
+  try {
+    let total = 0;
+    if (type === 'doses' || type === 'all') total += await deleteCollection('doses', 'uid', currentUser.uid);
+    if (type === 'medicines' || type === 'all') total += await deleteCollection('medicines', 'uid', currentUser.uid);
+    if (type === 'nudges' || type === 'all') {
+      total += await deleteCollection('nudges', 'fromUid', currentUser.uid);
+      total += await deleteCollection('nudges', 'toUid', currentUser.uid);
+    }
+    toast(`✅ Deleted ${total} records — fresh start!`);
+  } catch(e) { toast('Error: ' + e.message); console.error(e); }
+}
+
+function openChangePass() { document.getElementById('m-pass').classList.add('op'); }
+
+async function doChangePass() {
+  const np = document.getElementById('new-pass').value;
+  const cp = document.getElementById('confirm-pass').value;
+  const st = document.getElementById('pass-status');
+  if (!np || np.length < 6) { st.textContent = 'Password must be at least 6 characters'; st.className = 'ais no'; return; }
+  if (np !== cp) { st.textContent = 'Passwords do not match'; st.className = 'ais no'; return; }
+  try {
+    await FB.updatePassword(currentUser, np);
+    cm('m-pass');
+    toast('✅ Password updated!');
+  } catch(e) {
+    if (e.code === 'auth/requires-recent-login') {
+      st.textContent = 'Please sign out and sign in again before changing password';
+    } else {
+      st.textContent = 'Error: ' + e.message;
+    }
+    st.className = 'ais no';
+  }
+}
+
+async function confirmDeleteAccount() {
+  if (!confirm('Delete your account permanently? This removes ALL your data and cannot be undone.')) return;
+  if (!confirm('Are you absolutely sure? There is no going back!')) return;
+  try {
+    // Delete all data first
+    await deleteCollection('doses', 'uid', currentUser.uid);
+    await deleteCollection('medicines', 'uid', currentUser.uid);
+    await deleteCollection('nudges', 'fromUid', currentUser.uid);
+    await deleteCollection('nudges', 'toUid', currentUser.uid);
+    await FB.deleteDoc(FB.doc(FB.db,'users',currentUser.uid));
+    await FB.deleteUser(currentUser);
+    toast('Account deleted');
+  } catch(e) {
+    if (e.code === 'auth/requires-recent-login') {
+      alert('Please sign out and sign in again before deleting your account.');
+    } else {
+      toast('Error: ' + e.message);
+    }
+  }
 }
 
 // ── URL PARAM: auto-open monitor ───────────────────────────────────────────────
