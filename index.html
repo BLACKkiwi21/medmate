@@ -796,6 +796,7 @@ function subscribeToDoses() {
     rHome();
     rLog(); // Always refresh log whenever doses change
   }, err => {
+    if (err.code === 'permission-denied') return; // expected before login, ignore silently
     console.error('Doses query error:', err.message);
     // Fallback: query without orderBy if index missing
     const qFallback = FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',currentUser.uid));
