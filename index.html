@@ -483,6 +483,7 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
 <!-- ADD MEDICINE MODAL -->
 <div class="mb" id="m-add">
   <div class="mo">
+    <div class="mo-handle"></div>
     <div class="mt">Add medicine</div>
     <div class="ms">Set up a reminder with a scheduled time</div>
     <div class="fld"><label>Medicine name</label><input id="mn" placeholder="e.g. Metformin 500mg"/></div>
@@ -505,7 +506,7 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
         <option value="flexible">🟢 Flexible — any time of day is fine</option>
       </select>
     </div>
-    <div id="priority-hint" style="font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:12px;padding:8px 12px;background:var(--sage);border-radius:8px">
+    <div id="priority-hint" style="font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:12px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
       🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time
     </div>
     <div style="display:flex;gap:9px;margin-top:4px">
@@ -518,6 +519,7 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
 <!-- TAKE DOSE MODAL -->
 <div class="mb" id="m-dose">
   <div class="mo">
+    <div class="mo-handle"></div>
     <div class="mt" id="dtitle">Take dose</div>
     <div class="ms">Upload a photo of your medicine to confirm</div>
 
@@ -566,7 +568,8 @@ window.addEventListener('fbready', () => {
       saveAccountToDevice(user);
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-screen').style.display = 'block';
-      document.getElementById('uchip').textContent = user.displayName || user.email.split('@')[0];
+      const uchip = document.getElementById('uchip');
+      if (uchip) uchip.textContent = user.displayName || user.email.split('@')[0];
       loadUserProfile();
       subscribeToMeds();
       subscribeToDoses();
