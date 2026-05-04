@@ -345,15 +345,33 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
       <!-- PROFILE CARD -->
       <div class="card">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-          <div id="settings-avatar" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--mint),#2e9068);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0">?</div>
+          <!-- Profile photo -->
+          <div style="position:relative;flex-shrink:0" onclick="document.getElementById('profile-pic-input').click()">
+            <div id="settings-avatar" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-dark));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;overflow:hidden">?</div>
+            <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid var(--white)">📷</div>
+          </div>
+          <input type="file" id="profile-pic-input" accept="image/*" style="display:none" onchange="uploadProfilePic(event)"/>
           <div>
             <div id="settings-name" style="font-size:16px;font-weight:700"></div>
             <div id="settings-email" style="font-size:12px;color:var(--muted);margin-top:2px"></div>
-            <div id="settings-code" style="font-size:11px;color:var(--mint);margin-top:2px;font-weight:600"></div>
+            <div id="settings-code" style="font-size:11px;color:var(--blue);margin-top:2px;font-weight:600"></div>
           </div>
         </div>
         <div class="fld"><label>Display name</label><input id="s-name" placeholder="Your name"/></div>
         <button class="btn bp" onclick="updateName()">Update name</button>
+      </div>
+
+      <!-- LANGUAGE -->
+      <div class="section-label">Language</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="setting-row" onclick="toggleLang()">
+          <div class="setting-icon" style="background:#eff6ff">🌐</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600" id="lang-title">Language</div>
+            <div style="font-size:12px;color:var(--muted)" id="lang-sub">Currently: English</div>
+          </div>
+          <span class="badge bg" id="lang-badge">EN</span>
+        </div>
       </div>
 
       <!-- APPEARANCE -->
@@ -418,8 +436,16 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
         <div class="setting-row" onclick="confirmClear('all')">
           <div class="setting-icon" style="background:#fef2f2">🗑️</div>
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:600;color:var(--red)">Clear all data</div>
-            <div style="font-size:12px;color:var(--muted)">Fresh start — keeps your account</div>
+            <div style="font-size:14px;font-weight:600;color:var(--red)" data-en="Clear all data" data-ms="Padam semua data">Clear all data</div>
+            <div style="font-size:12px;color:var(--muted)" data-en="Fresh start — keeps your account" data-ms="Mula semula — akaun dikekalkan">Fresh start — keeps your account</div>
+          </div>
+          <span style="color:var(--muted);font-size:20px">›</span>
+        </div>
+        <div class="setting-row" onclick="exportPDF()">
+          <div class="setting-icon" style="background:#f0fdf4">📄</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600" data-en="Export dose history" data-ms="Eksport sejarah dos">Export dose history</div>
+            <div style="font-size:12px;color:var(--muted)" data-en="Download report for your doctor" data-ms="Muat turun laporan untuk doktor">Download report for your doctor</div>
           </div>
           <span style="color:var(--muted);font-size:20px">›</span>
         </div>
@@ -456,11 +482,30 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
 
       <!-- ABOUT -->
       <div class="section-label">About</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="setting-row" onclick="showWeeklyReport()">
+          <div class="setting-icon" style="background:#eff6ff">📊</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600" data-en="Weekly report" data-ms="Laporan mingguan">Weekly report</div>
+            <div style="font-size:12px;color:var(--muted)" data-en="View your 7-day summary" data-ms="Lihat ringkasan 7 hari">View your 7-day summary</div>
+          </div>
+          <span style="color:var(--muted);font-size:20px">›</span>
+        </div>
+        <div class="setting-row" onclick="openRefillSettings()">
+          <div class="setting-icon" style="background:#fffbeb">💊</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600" data-en="Refill reminders" data-ms="Peringatan isi semula">Refill reminders</div>
+            <div style="font-size:12px;color:var(--muted)" data-en="Set low stock alerts per medicine" data-ms="Tetapkan amaran stok rendah">Set low stock alerts per medicine</div>
+          </div>
+          <span style="color:var(--muted);font-size:20px">›</span>
+        </div>
+      </div>
+
       <div class="card" style="text-align:center;padding:24px">
         <div style="font-size:32px;margin-bottom:8px">💊</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--mint)">MedMate</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--blue)">MedMate</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px">Version 1.0 · Built with ❤️</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:8px">Your smart medicine companion</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px" data-en="Your smart medicine companion" data-ms="Teman ubat pintar anda">Your smart medicine companion</div>
       </div>
 
     </div>
@@ -483,15 +528,70 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
   </div>
 </div>
 
+<!-- WEEKLY REPORT MODAL -->
+<div class="mb" id="m-report">
+  <div class="mo">
+    <div class="mo-handle"></div>
+    <div class="mt" data-en="Weekly Report" data-ms="Laporan Mingguan">Weekly Report</div>
+    <div class="ms" data-en="Your medicine summary for the past 7 days" data-ms="Ringkasan ubat anda untuk 7 hari lepas">Your medicine summary for the past 7 days</div>
+    <div id="report-content"></div>
+    <button class="btn bo" style="width:100%;margin-top:14px" onclick="cm('m-report')">Close</button>
+  </div>
+</div>
+
+<!-- REFILL REMINDER MODAL -->
+<div class="mb" id="m-refill">
+  <div class="mo">
+    <div class="mo-handle"></div>
+    <div class="mt" data-en="Refill Reminders" data-ms="Peringatan Isi Semula">Refill Reminders</div>
+    <div class="ms" data-en="Set how many doses remain before you get an alert" data-ms="Tetapkan baki dos sebelum amaran">Set how many doses remain before you get an alert</div>
+    <div id="refill-list"></div>
+    <button class="btn bo" style="width:100%;margin-top:14px" onclick="cm('m-refill')">Close</button>
+  </div>
+</div>
+
+<!-- ONBOARDING MODAL -->
+<div class="mb" id="m-onboard" style="align-items:flex-end">
+  <div class="mo" style="border-radius:24px 24px 0 0;padding-bottom:40px">
+    <div class="mo-handle"></div>
+    <div id="onboard-slides">
+      <!-- Slides rendered by JS -->
+    </div>
+    <div style="display:flex;justify-content:center;gap:6px;margin:16px 0" id="onboard-dots"></div>
+    <div style="display:flex;gap:9px">
+      <button class="btn bo" style="flex:1" id="onboard-skip" onclick="finishOnboard()">Skip</button>
+      <button class="btn bp" style="flex:1" id="onboard-next" onclick="nextOnboardSlide()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEDICINE DATABASE SEARCH MODAL -->
+<div class="mb" id="m-meddb">
+  <div class="mo">
+    <div class="mo-handle"></div>
+    <div class="mt" data-en="Medicine Database" data-ms="Pangkalan Data Ubat">Medicine Database</div>
+    <div class="ms" data-en="Search to auto-fill medicine details" data-ms="Cari untuk isi butiran ubat">Search to auto-fill medicine details</div>
+    <div class="fld">
+      <input id="meddb-search" placeholder="Type medicine name..." oninput="searchMedDB(this.value)"/>
+    </div>
+    <div id="meddb-results" style="max-height:300px;overflow-y:auto"></div>
+    <button class="btn bo" style="width:100%;margin-top:10px" onclick="cm('m-meddb')">Cancel</button>
+  </div>
+</div>
+
 <!-- ADD MEDICINE MODAL -->
 <div class="mb" id="m-add">
   <div class="mo">
     <div class="mo-handle"></div>
     <div class="mt">Add medicine</div>
-    <div class="ms">Set up a reminder with a scheduled time</div>
-    <div class="fld"><label>Medicine name</label><input id="mn" placeholder="e.g. Metformin 500mg"/></div>
+    <div class="ms">Set up reminders with scheduled times</div>
+    <div class="fld"><label>Medicine name</label>
+      <div style="display:flex;gap:8px">
+        <input id="mn" placeholder="e.g. Metformin 500mg" style="flex:1"/>
+        <button class="btn bo sm" onclick="openMedDB()" style="flex-shrink:0;white-space:nowrap">🔍 Search</button>
+      </div>
+    </div>
     <div class="fld"><label>Dosage / notes</label><input id="md" placeholder="e.g. 1 tablet with food"/></div>
-    <div class="fld"><label>Reminder time</label><input type="time" id="mti"/></div>
     <div class="fld"><label>Icon</label>
       <select id="micon">
         <option value="💊">💊 Tablet / Capsule</option>
@@ -503,7 +603,7 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
       </select>
     </div>
     <div class="fld"><label>Importance level</label>
-      <select id="mpriority">
+      <select id="mpriority" onchange="updatePriorityHint()">
         <option value="normal">🟡 Normal — a bit flexible on timing</option>
         <option value="critical">🔴 Critical — must be taken on time</option>
         <option value="flexible">🟢 Flexible — any time of day is fine</option>
@@ -512,6 +612,29 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
     <div id="priority-hint" style="font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:12px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
       🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time
     </div>
+
+    <!-- Multiple time slots -->
+    <div class="fld">
+      <label>Reminder times</label>
+      <div id="time-slots" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+        <div class="time-slot-row" style="display:flex;align-items:center;gap:8px">
+          <input type="time" class="slot-time" style="flex:1"/>
+          <button onclick="removeTimeSlot(this)" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--red);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
+        </div>
+      </div>
+      <button onclick="addTimeSlot()" class="btn bo sm" style="width:100%">+ Add another time</button>
+    </div>
+
+    <!-- Photo expiry for critical -->
+    <div id="expiry-wrap" style="display:none" class="fld">
+      <label>Photo must be taken within</label>
+      <select id="mexpiry">
+        <option value="30">30 minutes of scheduled time</option>
+        <option value="60">1 hour of scheduled time</option>
+        <option value="120">2 hours of scheduled time</option>
+      </select>
+    </div>
+
     <div style="display:flex;gap:9px;margin-top:4px">
       <button class="btn bo" style="flex:1" onclick="cm('m-add')">Cancel</button>
       <button class="btn bp" style="flex:1" onclick="saveMed()">Add medicine</button>
@@ -539,6 +662,10 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
     <div id="aibox"></div>
     <div id="prevbox" style="display:none;margin-top:9px">
       <img id="pimg" style="width:100%;border-radius:13px;max-height:220px;object-fit:cover"/>
+    </div>
+    <div id="notes-wrap" style="display:none;margin-top:10px">
+      <label style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">How do you feel? (optional)</label>
+      <input id="dose-notes" placeholder="e.g. Felt dizzy, took with food..."/>
     </div>
     <div style="display:flex;gap:9px;margin-top:12px">
       <button class="btn bo" style="flex:1" onclick="closeDose()">Cancel</button>
@@ -579,6 +706,8 @@ window.addEventListener('fbready', () => {
       loadFriends();
       scheduleReminders();
       listenForNudges();
+      checkOnboarding();
+      setTimeout(checkRefillAlerts, 3000);
     } else {
       currentUser = null;
       document.getElementById('auth-box').style.display = 'block';
@@ -717,6 +846,13 @@ async function loadUserProfile() {
     if (el) el.textContent = userCode;
     const sl = document.getElementById('slink');
     if (sl) sl.value = location.origin + location.pathname + '?monitor=' + userCode;
+    // Load profile photo if exists
+    if (data.photoURL) {
+      const avatar = document.getElementById('settings-avatar');
+      const homeAvatar = document.getElementById('home-avatar');
+      if (avatar) avatar.innerHTML = `<img src="${data.photoURL}" style="width:100%;height:100%;object-fit:cover"/>`;
+      if (homeAvatar) homeAvatar.innerHTML = `<img src="${data.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>`;
+    }
   }
   const hr = new Date().getHours();
   const g = hr<12 ? 'Good morning' : hr<17 ? 'Good afternoon' : 'Good evening';
@@ -754,32 +890,58 @@ function subscribeToMeds() {
   });
 }
 
+// ── TIME SLOT HELPERS ──────────────────────────────────────────────────────────
+function addTimeSlot() {
+  const wrap = document.getElementById('time-slots');
+  const row = document.createElement('div');
+  row.className = 'time-slot-row';
+  row.style.cssText = 'display:flex;align-items:center;gap:8px';
+  row.innerHTML = `<input type="time" class="slot-time" style="flex:1"/>
+    <button onclick="removeTimeSlot(this)" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--red);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>`;
+  wrap.appendChild(row);
+}
+function removeTimeSlot(btn) {
+  const rows = document.querySelectorAll('.time-slot-row');
+  if (rows.length <= 1) { toast('At least one time is required'); return; }
+  btn.parentElement.remove();
+}
+function updatePriorityHint() {
+  const p = document.getElementById('mpriority').value;
+  const hints = {
+    critical: '🔴 <b>Critical:</b> Must be taken within 30 mins of scheduled time',
+    normal:   '🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time',
+    flexible: '🟢 <b>Flexible:</b> Can be taken any time during the day'
+  };
+  document.getElementById('priority-hint').innerHTML = hints[p];
+  document.getElementById('expiry-wrap').style.display = p === 'critical' ? 'block' : 'none';
+}
+
 async function saveMed() {
   const n = document.getElementById('mn').value.trim();
   const d = document.getElementById('md').value.trim();
-  const t = document.getElementById('mti').value;
   const i = document.getElementById('micon').value;
   const p = document.getElementById('mpriority').value;
-  if (!n||!t) { toast('Please fill in name and time'); return; }
+  const expiry = p === 'critical' ? parseInt(document.getElementById('mexpiry').value) : null;
+  // Collect all time slots
+  const times = [...document.querySelectorAll('.slot-time')]
+    .map(el => el.value).filter(t => t);
+  if (!n) { toast('Please fill in medicine name'); return; }
+  if (!times.length) { toast('Please add at least one reminder time'); return; }
   await FB.addDoc(FB.collection(FB.db,'medicines'), {
-    uid: currentUser.uid, name:n, dose:d, time:t, icon:i, priority:p, createdAt: FB.serverTimestamp()
+    uid: currentUser.uid, name:n, dose:d, times, time:times[0], icon:i,
+    priority:p, expiryMins: expiry, createdAt: FB.serverTimestamp()
   });
   cm('m-add');
-  ['mn','md','mti'].forEach(id => document.getElementById(id).value = '');
+  // Reset form
+  document.getElementById('mn').value = '';
+  document.getElementById('md').value = '';
+  document.getElementById('time-slots').innerHTML = `
+    <div class="time-slot-row" style="display:flex;align-items:center;gap:8px">
+      <input type="time" class="slot-time" style="flex:1"/>
+      <button onclick="removeTimeSlot(this)" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--red);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
+    </div>`;
   toast('Medicine added!');
 }
-
-// Update priority hint when dropdown changes
-document.addEventListener('change', e => {
-  if (e.target.id === 'mpriority') {
-    const hints = {
-      critical: '🔴 <b>Critical:</b> Must be taken within 30 mins of scheduled time',
-      normal:   '🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time',
-      flexible: '🟢 <b>Flexible:</b> Can be taken any time during the day'
-    };
-    document.getElementById('priority-hint').innerHTML = hints[e.target.value];
-  }
-});
 
 async function delMed(id) {
   if (!confirm('Remove this medicine?')) return;
@@ -818,47 +980,92 @@ function tsToDate(ts) {
 }
 
 // ── HOME ───────────────────────────────────────────────────────────────────────
+function getMedTimes(m) {
+  // Support both old (m.time) and new (m.times[]) format
+  if (m.times && m.times.length) return m.times;
+  if (m.time) return [m.time];
+  return [];
+}
+
 function rHome() {
   const now = new Date(), tod = now.toDateString();
   let missed = 0;
+
+  // Count missed — each time slot is a separate dose
   meds.forEach(m => {
-    const tk = doses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
-    if (!tk) {
-      const [h,mn] = m.time.split(':').map(Number), s = new Date(); s.setHours(h,mn,0,0);
-      if (s < now) missed++;
-    }
+    getMedTimes(m).forEach(t => {
+      const tk = doses.find(d => d.medId===m.id && d.scheduledTime===t && tsToDate(d.takenAt).toDateString()===tod);
+      if (!tk) {
+        const [h,mn] = t.split(':').map(Number), s = new Date(); s.setHours(h,mn,0,0);
+        if (s < now) missed++;
+      }
+    });
   });
+
   document.getElementById('alerts').innerHTML = missed > 0
     ? `<div class="ab">⚠️ You have ${missed} missed dose${missed>1?'s':''} today — your monitors can see this.</div>` : '';
 
   const el = document.getElementById('med-home');
   if (!meds.length) { el.innerHTML='<div class="es"><div class="ei">💊</div>No medicines yet.<br>Tap below to add one!</div>'; return; }
 
-  el.innerHTML = meds.map(m => {
-    const tk = doses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
-    const st = tk ? 'taken' : doseStatus(m);
-    const bm = {taken:'bg',due:'bw',upcoming:'bx',missed:'br'};
-    const lm = {taken:'✓ Taken',due:'Due now',upcoming:'Upcoming',missed:'Missed'};
-    return `<div class="mi">
-      <div class="mico">${m.icon}</div>
-      <div style="flex:1">
-        <div class="mnm">${m.name}</div>
-        <div class="msb">${m.dose||'No notes'} · ${m.time}</div>
-      </div>
-      <div class="mac">
-        <span class="badge ${bm[st]}">${lm[st]}</span>
-        ${!tk ? `<button class="btn bo sm" onclick="openDose('${m.id}')">Take dose</button>` : ''}
-        <button class="btn bd sm" onclick="delMed('${m.id}')">Remove</button>
-      </div>
-    </div>`;
-  }).join('');
+  // Each time slot gets its own row
+  let html = '';
+  meds.forEach(m => {
+    const times = getMedTimes(m);
+    const priority = m.priority || 'normal';
+    const pLabel = {critical:'🔴',normal:'🟡',flexible:'🟢'}[priority];
+
+    times.forEach(t => {
+      const tk = doses.find(d => d.medId===m.id && d.scheduledTime===t && tsToDate(d.takenAt).toDateString()===tod);
+      const st = tk ? 'taken' : doseStatus(m, t);
+      const bm = {taken:'bg',due:'bw',upcoming:'bx',missed:'br'};
+      const lm = {taken:'✓ Taken',due:'Due now',upcoming:'Upcoming',missed:'Missed'};
+
+      // Check photo expiry for critical meds
+      let expiryWarning = '';
+      if (!tk && priority === 'critical' && m.expiryMins) {
+        const [h,mn] = t.split(':').map(Number), s = new Date(); s.setHours(h,mn,0,0);
+        const diffMins = (now - s) / 60000;
+        if (diffMins > 0 && diffMins <= m.expiryMins) {
+          const remaining = Math.round(m.expiryMins - diffMins);
+          expiryWarning = `<div style="font-size:10px;color:var(--red);margin-top:2px">⏱ ${remaining} mins left to confirm</div>`;
+        } else if (diffMins > m.expiryMins) {
+          expiryWarning = `<div style="font-size:10px;color:var(--muted);margin-top:2px">⏱ Confirmation window expired</div>`;
+        }
+      }
+
+      html += `<div class="mi">
+        <div class="mico">${m.icon}</div>
+        <div style="flex:1">
+          <div class="mnm">${m.name} ${pLabel}</div>
+          <div class="msb">${m.dose||''} · ${t}${times.length > 1 ? ` <span style="opacity:.6">(${times.indexOf(t)+1}/${times.length})</span>` : ''}</div>
+          ${expiryWarning}
+        </div>
+        <div class="mac">
+          <span class="badge ${bm[st]}">${lm[st]}</span>
+          ${!tk ? `<button class="btn bo sm" onclick="openDose('${m.id}','${t}')">Take dose</button>` : ''}
+          ${times.length === 1 ? `<button class="btn bd sm" onclick="delMed('${m.id}')">Remove</button>` : ''}
+        </div>
+      </div>`;
+    });
+
+    // Show remove button once per medicine if multiple times
+    if (times.length > 1) {
+      html += `<div style="text-align:right;margin-top:-6px;margin-bottom:10px">
+        <button class="btn bd sm" onclick="delMed('${m.id}')">Remove ${m.name}</button>
+      </div>`;
+    }
+  });
+  el.innerHTML = html;
 }
 
-function doseStatus(m) {
-  const now = new Date(), [h,mn] = m.time.split(':').map(Number), s = new Date();
+function doseStatus(m, time) {
+  const t = time || getMedTimes(m)[0] || '00:00';
+  const now = new Date(), [h,mn] = t.split(':').map(Number), s = new Date();
   s.setHours(h,mn,0,0);
+  const window = m.priority === 'critical' ? 30 : m.priority === 'flexible' ? 999 : 60;
   const d = (s - now) / 60000;
-  return d < -30 ? 'missed' : d <= 30 ? 'due' : 'upcoming';
+  return d < -window ? 'missed' : d <= window ? 'due' : 'upcoming';
 }
 
 async function confirmDose() {
@@ -868,25 +1075,44 @@ async function confirmDose() {
   try {
     const m = meds.find(x => x.id===curMed);
     const now = new Date();
-    // Calculate timing status
-    let timingStatus = 'on-time';
-    if (m && m.time) {
-      const [h,mn] = m.time.split(':').map(Number);
+    const schedTime = curScheduledTime || getMedTimes(m)[0] || '';
+    const notes = document.getElementById('dose-notes')?.value?.trim() || '';
+
+    // Check photo expiry for critical meds
+    if (m?.priority === 'critical' && m?.expiryMins && schedTime) {
+      const [h,mn] = schedTime.split(':').map(Number);
       const sched = new Date(); sched.setHours(h,mn,0,0);
       const diffMins = (now - sched) / 60000;
-      const window = m.priority === 'critical' ? 30 : m.priority === 'flexible' ? 999 : 60;
-      if (diffMins < -window) timingStatus = 'early';
-      else if (diffMins > window) timingStatus = 'late';
+      if (diffMins > m.expiryMins) {
+        document.getElementById('aibox').innerHTML = `<div class="ais no">⏱ Confirmation window expired — this dose cannot be recorded as it was more than ${m.expiryMins} mins past scheduled time.</div>`;
+        btn.disabled = false;
+        btn.textContent = '✓ Mark as taken';
+        return;
+      }
+    }
+
+    // Calculate timing status
+    let timingStatus = 'on-time';
+    if (schedTime) {
+      const [h,mn] = schedTime.split(':').map(Number);
+      const sched = new Date(); sched.setHours(h,mn,0,0);
+      const diffMins = (now - sched) / 60000;
+      const win = m?.priority === 'critical' ? 30 : m?.priority === 'flexible' ? 999 : 60;
+      if (diffMins < -win) timingStatus = 'early';
+      else if (diffMins > win) timingStatus = 'late';
       else timingStatus = 'on-time';
     }
+
     await FB.addDoc(FB.collection(FB.db,'doses'), {
       uid: currentUser.uid,
       medId: curMed,
       medName: m ? m.name : '',
       medIcon: m ? m.icon : '💊',
-      medTime: m ? m.time : '',
+      medTime: m ? (m.times?.[0] || m.time || '') : '',
+      scheduledTime: schedTime,
       medPriority: m ? (m.priority || 'normal') : 'normal',
       photo: capData,
+      notes: notes || null,
       detectedName: window._lastDetected?.detected || null,
       detectedDosage: window._lastDetected?.dosage || null,
       detectedMatch: window._lastDetected?.match ?? null,
@@ -907,60 +1133,110 @@ async function confirmDose() {
 function rLog() {
   const el = document.getElementById('log-list');
 
-  if (!doses.length) {
+  // Build historical missed doses for last 7 days
+  const missedEntries = [];
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const ds = d.toDateString();
+    meds.forEach(m => {
+      getMedTimes(m).forEach(t => {
+        const taken = doses.find(dose =>
+          dose.medId === m.id &&
+          (dose.scheduledTime === t || (!dose.scheduledTime && t === getMedTimes(m)[0])) &&
+          tsToDate(dose.takenAt).toDateString() === ds
+        );
+        if (!taken) missedEntries.push({ date: d, medName: m.name, medIcon: m.icon, scheduledTime: t });
+      });
+    });
+  }
+
+  if (!doses.length && !missedEntries.length) {
     el.innerHTML = '<div class="es"><div class="ei">📋</div>No doses recorded yet.<br>Take your first dose to see history here!</div>';
     return;
   }
 
-  // Group doses by date (newest first)
+  // Group taken doses by date
   const groups = {};
   doses.forEach(d => {
     const t = tsToDate(d.takenAt);
     const dateKey = t.toLocaleDateString('en-MY', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
-    if (!groups[dateKey]) groups[dateKey] = [];
-    groups[dateKey].push(d);
+    if (!groups[dateKey]) groups[dateKey] = { taken:[], missed:[] };
+    groups[dateKey].taken.push(d);
+  });
+
+  // Add missed to groups
+  missedEntries.forEach(me => {
+    const dateKey = me.date.toLocaleDateString('en-MY', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+    if (!groups[dateKey]) groups[dateKey] = { taken:[], missed:[] };
+    groups[dateKey].missed.push(me);
+  });
+
+  // Sort groups by date descending
+  const sortedGroups = Object.entries(groups).sort((a,b) => {
+    const dateA = new Date(a[1].taken[0] ? tsToDate(a[1].taken[0].takenAt) : a[1].missed[0]?.date);
+    const dateB = new Date(b[1].taken[0] ? tsToDate(b[1].taken[0].takenAt) : b[1].missed[0]?.date);
+    return dateB - dateA;
   });
 
   let html = '';
-  Object.entries(groups).forEach(([date, dayDoses]) => {
+  sortedGroups.forEach(([date, {taken, missed}]) => {
     html += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px">${date}</div>`;
 
-    dayDoses.forEach(d => {
+    // Taken doses
+    taken.forEach(d => {
       const m = meds.find(x => x.id === d.medId);
       const t = tsToDate(d.takenAt);
       const timeStr = t.toLocaleTimeString('en-MY', {hour:'2-digit', minute:'2-digit'});
       const priority = d.medPriority || m?.priority || 'normal';
-      const pLabel = { critical:'🔴 Critical', normal:'🟡 Normal', flexible:'🟢 Flexible' }[priority];
+      const pLabel = {critical:'🔴',normal:'🟡',flexible:'🟢'}[priority];
       const ts = d.timingStatus || 'on-time';
-      const tsMap = {
-        early:    { label:'⚡ Early',   color:'var(--mint)' },
-        'on-time':{ label:'✅ On time', color:'var(--mint)' },
-        late:     { label:'⏰ Late',    color:'var(--warn)' }
-      };
+      const tsMap = {early:{label:'⚡ Early',color:'var(--blue)'},'on-time':{label:'✅ On time',color:'var(--blue)'},late:{label:'⏰ Late',color:'var(--warn)'}};
       const tsInfo = tsMap[ts] || tsMap['on-time'];
 
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--white);border:1px solid var(--border);border-radius:14px;margin-bottom:8px">
+      // AI detection info
+      let aiHtml = '';
+      if (d.detectedName) {
+        const matchIcon = d.detectedMatch === true ? '✅' : d.detectedMatch === false ? '⚠️' : '❓';
+        aiHtml = `<div style="font-size:11px;color:var(--muted);margin-top:2px">${matchIcon} Detected: ${d.detectedName}${d.detectedDosage ? ' · ' + d.detectedDosage : ''}</div>`;
+      }
+      // Notes
+      const notesHtml = d.notes ? `<div style="font-size:11px;color:var(--blue);margin-top:3px;font-style:italic">💬 "${d.notes}"</div>` : '';
+
+      html += `<div style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--white);border:1px solid var(--border);border-radius:14px;margin-bottom:8px">
         ${d.photo
           ? `<img src="${d.photo}" style="width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0"/>`
-          : `<div style="width:52px;height:52px;border-radius:10px;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${d.medIcon || m?.icon || '💊'}</div>`
+          : `<div style="width:52px;height:52px;border-radius:10px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${d.medIcon || m?.icon || '💊'}</div>`
         }
         <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:14px">${d.medName || m?.name || 'Unknown'}</div>
+          <div style="font-weight:700;font-size:14px">${d.medName || m?.name || 'Unknown'} ${pLabel}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px">
-            Taken at ${timeStr} · Scheduled ${d.medTime || m?.time || '--:--'}
+            Taken ${timeStr} · Scheduled ${d.scheduledTime || d.medTime || '--:--'}
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${pLabel}</div>
+          ${aiHtml}${notesHtml}
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:12px;font-weight:600;color:${tsInfo.color}">${tsInfo.label}</div>
-          <div class="badge bg" style="margin-top:4px;display:block">✓ Verified</div>
+          <div class="badge bg" style="margin-top:4px;display:block">✓ Done</div>
         </div>
+      </div>`;
+    });
+
+    // Missed doses
+    missed.forEach(me => {
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:14px;margin-bottom:8px">
+        <div style="width:52px;height:52px;border-radius:10px;background:#fde8e8;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${me.medIcon}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px;color:var(--red)">${me.medName}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Scheduled ${me.scheduledTime} — not taken</div>
+        </div>
+        <span class="badge br">❌ Missed</span>
       </div>`;
     });
   });
 
-  el.innerHTML = html;
+  el.innerHTML = html || '<div class="es"><div class="ei">📋</div>No history yet</div>';
 }
+
 
 // ── FAMILY ─────────────────────────────────────────────────────────────────────
 async function loadFriends() {
@@ -1217,13 +1493,20 @@ function buildDots(doseList) {
 }
 
 // ── CAMERA / AI ────────────────────────────────────────────────────────────────
-function openDose(id) {
-  curMed = id; capData = null;
+let curScheduledTime = '';
+
+function openDose(id, scheduledTime) {
+  curMed = id;
+  curScheduledTime = scheduledTime || '';
+  capData = null;
+  window._lastDetected = null;
   const m = meds.find(x => x.id===id);
-  document.getElementById('dtitle').textContent = m ? m.name : 'Take dose';
+  document.getElementById('dtitle').textContent = m ? `${m.name}${scheduledTime ? ' · ' + scheduledTime : ''}` : 'Take dose';
   document.getElementById('aibox').innerHTML = '';
   document.getElementById('prevbox').style.display = 'none';
   document.getElementById('cbtn').style.display = 'none';
+  document.getElementById('notes-wrap').style.display = 'none';
+  document.getElementById('dose-notes').value = '';
   document.getElementById('gallery-input').value = '';
   document.getElementById('upload-box').style.display = 'block';
   document.getElementById('m-dose').classList.add('op');
@@ -1329,6 +1612,8 @@ async function verifyAI(url) {
       btn.textContent = '✓ Mark as taken';
       btn.disabled = false;
       btn.onclick = confirmDose;
+      // Show notes field
+      document.getElementById('notes-wrap').style.display = 'block';
     } else {
       document.getElementById('aibox').innerHTML = `<div class="ais no">❌ ${res.reason}</div>`;
       showRetake();
@@ -1346,37 +1631,18 @@ function showRetake() {
   capData = null;
 }
 
-async function confirmDose() {
-  const btn = document.getElementById('cbtn');
-  btn.disabled = true;
-  btn.textContent = 'Saving...';
-  try {
-    const m = meds.find(x => x.id===curMed);
-    await FB.addDoc(FB.collection(FB.db,'doses'), {
-      uid: currentUser.uid,
-      medId: curMed,
-      medName: m ? m.name : '',
-      photo: capData,
-      takenAt: FB.serverTimestamp()
-    });
-    closeDose();
-    toast('✅ Dose marked as taken!');
-  } catch(e) {
-    console.error('confirmDose error:', e);
-    document.getElementById('aibox').innerHTML = `<div class="ais no">⚠️ Failed to save: ${e.message}</div>`;
-    btn.disabled = false;
-    btn.textContent = '✓ Mark as taken';
-  }
-}
-
 function closeDose() {
   stopCam();
   capData = null;
+  curScheduledTime = '';
+  window._lastDetected = null;
   document.getElementById('m-dose').classList.remove('op');
   document.getElementById('upload-box').style.display = 'block';
   document.getElementById('cbtn').style.display = 'none';
   document.getElementById('aibox').innerHTML = '';
   document.getElementById('prevbox').style.display = 'none';
+  document.getElementById('notes-wrap').style.display = 'none';
+  document.getElementById('dose-notes').value = '';
   document.getElementById('gallery-input').value = '';
 }
 
@@ -1616,6 +1882,385 @@ async function confirmDeleteAccount() {
       toast('Error: ' + e.message);
     }
   }
+}
+
+// ── LANGUAGE (Phase 3) ────────────────────────────────────────────────────────
+let currentLang = localStorage.getItem('mm_lang') || 'en';
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'ms' : 'en';
+  localStorage.setItem('mm_lang', currentLang);
+  applyLang();
+}
+
+function applyLang() {
+  const isMs = currentLang === 'ms';
+  document.getElementById('lang-badge').textContent = isMs ? 'BM' : 'EN';
+  document.getElementById('lang-sub').textContent = isMs ? 'Kini: Bahasa Malaysia' : 'Currently: English';
+  // Update all elements with data-en / data-ms
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = isMs ? el.getAttribute('data-ms') : el.getAttribute('data-en');
+  });
+  // Update page headings
+  const labels = {
+    en: { home:'Home', log:'Log', family:'Family', monitor:'Monitor', settings:'⚙️',
+          addMed:'+ Add medicine', greetSub:'Your medicines for today' },
+    ms: { home:'Utama', log:'Log', family:'Keluarga', monitor:'Pantau', settings:'⚙️',
+          addMed:'+ Tambah ubat', greetSub:'Ubat anda untuk hari ini' }
+  };
+  const l = labels[currentLang];
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const keys = ['home','log','family','monitor','settings'];
+    if (keys[i]) t.textContent = l[keys[i]];
+  });
+}
+
+// Apply on load
+applyLang();
+
+// ── WEEKLY REPORT (Phase 3) ────────────────────────────────────────────────────
+function showWeeklyReport() {
+  const el = document.getElementById('report-content');
+  const now = new Date();
+  let totalScheduled = 0, totalTaken = 0, totalMissed = 0;
+  let medStats = [];
+
+  meds.forEach(m => {
+    const times = getMedTimes(m);
+    let mTaken = 0, mMissed = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const ds = d.toDateString();
+      // Skip today's future times
+      times.forEach(t => {
+        const [h,mn] = t.split(':').map(Number), s = new Date(d); s.setHours(h,mn,0,0);
+        if (s > now && i === 0) return; // future slot today
+        totalScheduled++;
+        const taken = doses.find(dose =>
+          dose.medId === m.id &&
+          (dose.scheduledTime === t || (!dose.scheduledTime && t === times[0])) &&
+          tsToDate(dose.takenAt).toDateString() === ds
+        );
+        if (taken) { totalTaken++; mTaken++; }
+        else { totalMissed++; mMissed++; }
+      });
+    }
+    medStats.push({ m, mTaken, mMissed, total: mTaken + mMissed });
+  });
+
+  const pct = totalScheduled > 0 ? Math.round((totalTaken/totalScheduled)*100) : 0;
+  const color = pct >= 80 ? 'var(--blue)' : pct >= 50 ? 'var(--warn)' : 'var(--red)';
+  const emoji = pct >= 80 ? '🌟' : pct >= 50 ? '💪' : '⚠️';
+
+  el.innerHTML = `
+    <!-- Score -->
+    <div style="text-align:center;padding:20px;background:var(--blue-light);border-radius:16px;margin-bottom:16px">
+      <div style="font-size:48px;font-weight:700;color:${color}">${pct}%</div>
+      <div style="font-size:14px;font-weight:600;margin-top:4px">${emoji} Adherence rate this week</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${totalTaken} of ${totalScheduled} doses taken</div>
+    </div>
+    <!-- Streak -->
+    <div style="display:flex;gap:5px;justify-content:center;margin-bottom:16px">
+      ${buildWeekDots()}
+    </div>
+    <!-- Per medicine breakdown -->
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Per medicine</div>
+    ${medStats.map(({m, mTaken, mMissed, total}) => {
+      const mp = total > 0 ? Math.round((mTaken/total)*100) : 0;
+      const mc = mp >= 80 ? 'var(--blue)' : mp >= 50 ? 'var(--warn)' : 'var(--red)';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:8px">
+        <span style="font-size:20px">${m.icon}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${m.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${mTaken} taken · ${mMissed} missed</div>
+        </div>
+        <div style="font-size:16px;font-weight:700;color:${mc}">${mp}%</div>
+      </div>`;
+    }).join('')}
+    ${meds.length === 0 ? '<div class="es" style="padding:16px">No medicines set up yet</div>' : ''}
+  `;
+  document.getElementById('m-report').classList.add('op');
+}
+
+function buildWeekDots() {
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-(6-i));
+    const ds = d.toDateString();
+    const anyTaken = doses.some(x => tsToDate(x.takenAt).toDateString() === ds);
+    const dayLabel = ['S','M','T','W','T','F','S'][d.getDay()];
+    return `<div style="text-align:center">
+      <div style="width:32px;height:32px;border-radius:50%;background:${anyTaken?'var(--blue)':'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${anyTaken?'#fff':'var(--muted)'}">${dayLabel}</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px">${d.getDate()}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── REFILL REMINDER (Phase 3) ──────────────────────────────────────────────────
+function openRefillSettings() {
+  const el = document.getElementById('refill-list');
+  if (!meds.length) {
+    el.innerHTML = '<div class="es" style="padding:16px">No medicines added yet</div>';
+  } else {
+    el.innerHTML = meds.map(m => {
+      const refill = m.refillAt || 5;
+      const stock = m.stock || null;
+      return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:18px">${m.icon}</span>
+          <div style="font-weight:600;font-size:13px">${m.name}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1">
+            <label style="font-size:11px">Current stock (doses left)</label>
+            <input type="number" min="0" value="${stock || ''}" placeholder="e.g. 30"
+              onchange="updateRefill('${m.id}','stock',this.value)"
+              style="font-size:13px;padding:8px 12px"/>
+          </div>
+          <div style="flex:1">
+            <label style="font-size:11px">Alert when below</label>
+            <input type="number" min="1" value="${refill}" placeholder="e.g. 5"
+              onchange="updateRefill('${m.id}','refillAt',this.value)"
+              style="font-size:13px;padding:8px 12px"/>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('m-refill').classList.add('op');
+}
+
+async function updateRefill(medId, field, value) {
+  try {
+    await FB.updateDoc(FB.doc(FB.db,'medicines',medId), { [field]: parseInt(value) || 0 });
+  } catch(e) { console.error('updateRefill:', e); }
+}
+
+function checkRefillAlerts() {
+  meds.forEach(m => {
+    if (m.stock && m.refillAt && m.stock <= m.refillAt) {
+      toast(`⚠️ Low stock: ${m.name} — only ${m.stock} doses left!`);
+    }
+  });
+}
+
+// ── PROFILE PHOTO (Phase 4) ────────────────────────────────────────────────────
+async function uploadProfilePic(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  toast('Uploading photo...');
+  const reader = new FileReader();
+  reader.onload = async e => {
+    // Compress to small size
+    const img = new Image();
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      const size = 128;
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      // Crop to circle-friendly square
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2, sy = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      // Save to Firestore user doc
+      try {
+        await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { photoURL: dataUrl });
+        // Update avatar display
+        const avatar = document.getElementById('settings-avatar');
+        const homeAvatar = document.getElementById('home-avatar');
+        avatar.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover"/>`;
+        if (homeAvatar) homeAvatar.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>`;
+        toast('✅ Profile photo updated!');
+      } catch(e) { toast('Failed to save photo: ' + e.message); }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── ONBOARDING (Phase 4) ───────────────────────────────────────────────────────
+const onboardSlides = [
+  { icon:'💊', title:'Welcome to MedMate', body:'Your smart medicine companion. Never miss a dose again with photo verification and family monitoring.' },
+  { icon:'📸', title:'Photo verification', body:'When it\'s time to take your medicine, snap a photo to confirm. Our AI checks that it\'s the right medicine.' },
+  { icon:'👨‍👩‍👧', title:'Family monitoring', body:'Share your access code with family or caregivers. They get a live dashboard of your medicine progress.' },
+  { icon:'🔔', title:'Smart reminders', body:'Set reminder times for each medicine. We\'ll notify you when it\'s time — even multiple times a day.' },
+  { icon:'🚀', title:'Ready to start!', body:'Add your first medicine to get started. You can always change settings later.' }
+];
+let onboardIndex = 0;
+
+function showOnboarding() {
+  onboardIndex = 0;
+  renderOnboardSlide();
+  document.getElementById('m-onboard').classList.add('op');
+}
+
+function renderOnboardSlide() {
+  const s = onboardSlides[onboardIndex];
+  const isLast = onboardIndex === onboardSlides.length - 1;
+  document.getElementById('onboard-slides').innerHTML = `
+    <div style="text-align:center;padding:20px 10px">
+      <div style="font-size:64px;margin-bottom:16px">${s.icon}</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:10px">${s.title}</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6">${s.body}</div>
+    </div>`;
+  // Dots
+  document.getElementById('onboard-dots').innerHTML = onboardSlides.map((_,i) =>
+    `<div style="width:${i===onboardIndex?'20px':'8px'};height:8px;border-radius:4px;background:${i===onboardIndex?'var(--blue)':'var(--border)'};transition:all .3s"></div>`
+  ).join('');
+  document.getElementById('onboard-next').textContent = isLast ? '✓ Get started' : 'Next →';
+  document.getElementById('onboard-skip').style.display = isLast ? 'none' : 'flex';
+}
+
+function nextOnboardSlide() {
+  if (onboardIndex < onboardSlides.length - 1) {
+    onboardIndex++;
+    renderOnboardSlide();
+  } else {
+    finishOnboard();
+  }
+}
+
+function finishOnboard() {
+  localStorage.setItem('mm_onboarded', '1');
+  cm('m-onboard');
+}
+
+// Check if first time user
+function checkOnboarding() {
+  if (!localStorage.getItem('mm_onboarded')) {
+    setTimeout(showOnboarding, 800);
+  }
+}
+
+// ── MEDICINE DATABASE (Phase 4) ────────────────────────────────────────────────
+// Common medicines database
+const MEDICINE_DB = [
+  { name:'Paracetamol', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Take with water. Max 4g/day.' },
+  { name:'Paracetamol', dosage:'1000mg', form:'Tablet', icon:'💊', notes:'Take with water. Max 4g/day.' },
+  { name:'Ibuprofen', dosage:'400mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
+  { name:'Ibuprofen', dosage:'200mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
+  { name:'Metformin', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Take with meals.' },
+  { name:'Metformin', dosage:'850mg', form:'Tablet', icon:'💊', notes:'Take with meals.' },
+  { name:'Metformin', dosage:'1000mg', form:'Tablet', icon:'💊', notes:'Take with meals.' },
+  { name:'Amlodipine', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
+  { name:'Amlodipine', dosage:'10mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
+  { name:'Atorvastatin', dosage:'10mg', form:'Tablet', icon:'💊', notes:'Take at night.' },
+  { name:'Atorvastatin', dosage:'20mg', form:'Tablet', icon:'💊', notes:'Take at night.' },
+  { name:'Atorvastatin', dosage:'40mg', form:'Tablet', icon:'💊', notes:'Take at night.' },
+  { name:'Simvastatin', dosage:'20mg', form:'Tablet', icon:'💊', notes:'Take at night.' },
+  { name:'Lisinopril', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
+  { name:'Lisinopril', dosage:'10mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
+  { name:'Omeprazole', dosage:'20mg', form:'Capsule', icon:'💊', notes:'Take 30 mins before meal.' },
+  { name:'Omeprazole', dosage:'40mg', form:'Capsule', icon:'💊', notes:'Take 30 mins before meal.' },
+  { name:'Pantoprazole', dosage:'40mg', form:'Tablet', icon:'💊', notes:'Take before meals.' },
+  { name:'Aspirin', dosage:'75mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
+  { name:'Aspirin', dosage:'100mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
+  { name:'Losartan', dosage:'50mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
+  { name:'Losartan', dosage:'100mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
+  { name:'Salbutamol', dosage:'100mcg', form:'Inhaler', icon:'🫁', notes:'Shake before use.' },
+  { name:'Prednisolone', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
+  { name:'Amoxicillin', dosage:'250mg', form:'Capsule', icon:'💊', notes:'Complete full course.' },
+  { name:'Amoxicillin', dosage:'500mg', form:'Capsule', icon:'💊', notes:'Complete full course.' },
+  { name:'Azithromycin', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Complete full course.' },
+  { name:'Cetirizine', dosage:'10mg', form:'Tablet', icon:'💊', notes:'May cause drowsiness.' },
+  { name:'Loratadine', dosage:'10mg', form:'Tablet', icon:'💊', notes:'Non-drowsy antihistamine.' },
+  { name:'Vitamin D3', dosage:'1000 IU', form:'Capsule', icon:'💊', notes:'Take with fatty meal.' },
+  { name:'Vitamin D3', dosage:'5000 IU', form:'Capsule', icon:'💊', notes:'Take with fatty meal.' },
+  { name:'Vitamin C', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Take after meals.' },
+  { name:'Folic Acid', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take daily.' },
+  { name:'Iron supplement', dosage:'325mg', form:'Tablet', icon:'💊', notes:'Take on empty stomach.' },
+  { name:'Calcium', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Take with Vitamin D.' },
+  { name:'Metoprolol', dosage:'50mg', form:'Tablet', icon:'💊', notes:'Do not stop suddenly.' },
+  { name:'Bisoprolol', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
+  { name:'Warfarin', dosage:'1mg', form:'Tablet', icon:'💊', notes:'Regular INR monitoring needed.' },
+  { name:'Insulin', dosage:'', form:'Injection', icon:'💉', notes:'Rotate injection sites.' },
+  { name:'Methotrexate', dosage:'2.5mg', form:'Tablet', icon:'💊', notes:'Take once weekly only.' },
+];
+
+function openMedDB() {
+  document.getElementById('meddb-search').value = '';
+  document.getElementById('meddb-results').innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Type a medicine name to search</div>';
+  document.getElementById('m-meddb').classList.add('op');
+}
+
+function searchMedDB(query) {
+  const q = query.toLowerCase().trim();
+  const el = document.getElementById('meddb-results');
+  if (!q) { el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Type a medicine name to search</div>'; return; }
+  const results = MEDICINE_DB.filter(m => m.name.toLowerCase().includes(q) || (m.dosage && m.dosage.toLowerCase().includes(q)));
+  if (!results.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">No results — you can still type it manually</div>';
+    return;
+  }
+  el.innerHTML = results.slice(0,8).map(m =>
+    `<div onclick="selectMedFromDB('${m.name}','${m.dosage}','${m.notes}','${m.icon}')"
+      style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+      <div style="font-size:13px;font-weight:600">${m.name} ${m.dosage} <span style="font-size:11px;color:var(--muted);font-weight:400">${m.form}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${m.notes}</div>
+    </div>`
+  ).join('');
+}
+
+function selectMedFromDB(name, dosage, notes, icon) {
+  document.getElementById('mn').value = name + (dosage ? ' ' + dosage : '');
+  document.getElementById('md').value = notes;
+  // Set icon based on form
+  const iconEl = document.getElementById('micon');
+  if (icon === '💉') iconEl.value = '💉';
+  else if (icon === '🫁') iconEl.value = '🫁';
+  else iconEl.value = '💊';
+  cm('m-meddb');
+  toast(`✅ ${name} ${dosage} filled in!`);
+}
+
+// ── EXPORT PDF (Phase 4) ───────────────────────────────────────────────────────
+function exportPDF() {
+  if (!doses.length) { toast('No dose history to export'); return; }
+  const name = currentUser.displayName || currentUser.email.split('@')[0];
+  const date = new Date().toLocaleDateString('en-MY', {year:'numeric',month:'long',day:'numeric'});
+
+  let rows = doses.slice(0, 50).map(d => {
+    const m = meds.find(x => x.id === d.medId);
+    const t = tsToDate(d.takenAt);
+    const ts = d.timingStatus || 'on-time';
+    const tsLabel = {early:'Early','on-time':'On Time',late:'Late'}[ts];
+    return `<tr>
+      <td>${t.toLocaleDateString('en-MY',{day:'numeric',month:'short',year:'numeric'})}</td>
+      <td>${d.medName || m?.name || 'Unknown'}</td>
+      <td>${d.scheduledTime || d.medTime || '-'}</td>
+      <td>${t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${tsLabel}</td>
+      <td>${d.notes || '-'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+    <style>
+      body{font-family:Arial,sans-serif;padding:30px;color:#1a1a2e}
+      h1{color:#2563eb;margin-bottom:4px}
+      .sub{color:#64748b;font-size:13px;margin-bottom:24px}
+      table{width:100%;border-collapse:collapse;font-size:12px}
+      th{background:#2563eb;color:#fff;padding:8px 10px;text-align:left}
+      td{padding:7px 10px;border-bottom:1px solid #e2e8f0}
+      tr:nth-child(even){background:#f8fafc}
+    </style></head><body>
+    <h1>💊 MedMate — Dose History</h1>
+    <div class="sub">Patient: ${name} · Generated: ${date}</div>
+    <table>
+      <thead><tr><th>Date</th><th>Medicine</th><th>Scheduled</th><th>Taken at</th><th>Timing</th><th>Notes</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `MedMate_${name}_${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ Report downloaded!');
 }
 
 // ── URL PARAM: auto-open monitor ───────────────────────────────────────────────
