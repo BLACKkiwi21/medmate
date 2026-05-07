@@ -2225,14 +2225,7 @@ function closeMedAC() {
   const el = document.getElementById('med-ac');
   if (el) el.style.display = 'none';
 }
-  const q = query.toLowerCase().trim();
-  const el = document.getElementById('meddb-results');
-  if (!q) { el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Type a medicine name to search</div>'; return; }
-  const results = MEDICINE_DB.filter(m => m.name.toLowerCase().includes(q) || (m.dosage && m.dosage.toLowerCase().includes(q)));
-  if (!results.length) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">No results — you can still type it manually</div>';
-    return;
-  }
+
 function selectMedFromDB(name, dosage, notes, icon) {
   document.getElementById('mn').value = name + (dosage ? ' ' + dosage : '');
   document.getElementById('md').value = notes;
