@@ -586,9 +586,10 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
     <div class="mt">Add medicine</div>
     <div class="ms">Set up reminders with scheduled times</div>
     <div class="fld"><label>Medicine name</label>
-      <div style="display:flex;gap:8px">
-        <input id="mn" placeholder="e.g. Metformin 500mg" style="flex:1"/>
-        <button class="btn bo sm" onclick="openMedDB()" style="flex-shrink:0;white-space:nowrap">🔍 Search</button>
+      <div style="position:relative">
+        <input id="mn" placeholder="e.g. Metformin 500mg" autocomplete="off"
+          oninput="medAutocomplete(this.value)" onblur="setTimeout(()=>closeMedAC(),200)"/>
+        <div id="med-ac" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1.5px solid var(--blue);border-top:none;border-radius:0 0 12px 12px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 8px 20px rgba(0,0,0,.1)"></div>
       </div>
     </div>
     <div class="fld"><label>Dosage / notes</label><input id="md" placeholder="e.g. 1 tablet with food"/></div>
@@ -1063,9 +1064,9 @@ function doseStatus(m, time) {
   const t = time || getMedTimes(m)[0] || '00:00';
   const now = new Date(), [h,mn] = t.split(':').map(Number), s = new Date();
   s.setHours(h,mn,0,0);
-  const window = m.priority === 'critical' ? 30 : m.priority === 'flexible' ? 999 : 60;
+  const win = m.priority === 'critical' ? 30 : m.priority === 'flexible' ? 999 : 60;
   const d = (s - now) / 60000;
-  return d < -window ? 'missed' : d <= window ? 'due' : 'upcoming';
+  return d < -win ? 'missed' : d <= win ? 'due' : 'upcoming';
 }
 
 async function confirmDose() {
@@ -2183,7 +2184,47 @@ function openMedDB() {
   document.getElementById('m-meddb').classList.add('op');
 }
 
-function searchMedDB(query) {
+function medAutocomplete(query) {
+  const el = document.getElementById('med-ac');
+  const q = query.toLowerCase().trim();
+  if (!q || q.length < 2) { el.style.display = 'none'; return; }
+
+  const results = MEDICINE_DB.filter(m =>
+    m.name.toLowerCase().includes(q) ||
+    (m.name + ' ' + m.dosage).toLowerCase().includes(q)
+  ).slice(0, 8);
+
+  if (!results.length) { el.style.display = 'none'; return; }
+
+  el.style.display = 'block';
+  el.innerHTML = results.map((m, i) =>
+    `<div onmousedown="selectMedAC('${m.name}','${m.dosage}','${m.notes}','${m.icon}')"
+      style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;display:flex;align-items:center;gap:10px"
+      onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='transparent'">
+      <span style="font-size:16px">${m.icon}</span>
+      <div>
+        <div style="font-size:13px;font-weight:600">${m.name} <span style="color:var(--blue)">${m.dosage}</span> <span style="font-size:11px;color:var(--muted);font-weight:400">${m.form}</span></div>
+        <div style="font-size:11px;color:var(--muted)">${m.notes}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function selectMedAC(name, dosage, notes, icon) {
+  document.getElementById('mn').value = name + (dosage ? ' ' + dosage : '');
+  document.getElementById('md').value = notes;
+  const iconEl = document.getElementById('micon');
+  if (icon === '💉') iconEl.value = '💉';
+  else if (icon === '🫁') iconEl.value = '🫁';
+  else iconEl.value = '💊';
+  closeMedAC();
+  toast(`✅ ${name} ${dosage} selected!`);
+}
+
+function closeMedAC() {
+  const el = document.getElementById('med-ac');
+  if (el) el.style.display = 'none';
+}
   const q = query.toLowerCase().trim();
   const el = document.getElementById('meddb-results');
   if (!q) { el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Type a medicine name to search</div>'; return; }
@@ -2192,20 +2233,9 @@ function searchMedDB(query) {
     el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">No results — you can still type it manually</div>';
     return;
   }
-  el.innerHTML = results.slice(0,8).map(m =>
-    `<div onclick="selectMedFromDB('${m.name}','${m.dosage}','${m.notes}','${m.icon}')"
-      style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s"
-      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
-      <div style="font-size:13px;font-weight:600">${m.name} ${m.dosage} <span style="font-size:11px;color:var(--muted);font-weight:400">${m.form}</span></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">${m.notes}</div>
-    </div>`
-  ).join('');
-}
-
 function selectMedFromDB(name, dosage, notes, icon) {
   document.getElementById('mn').value = name + (dosage ? ' ' + dosage : '');
   document.getElementById('md').value = notes;
-  // Set icon based on form
   const iconEl = document.getElementById('micon');
   if (icon === '💉') iconEl.value = '💉';
   else if (icon === '🫁') iconEl.value = '🫁';
