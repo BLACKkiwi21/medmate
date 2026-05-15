@@ -1894,26 +1894,208 @@ function toggleLang() {
   applyLang();
 }
 
+const TRANSLATIONS = {
+  en: {
+    // Nav
+    home:'Home', log:'Log', family:'Family', monitor:'Monitor',
+    // Home
+    welcomeBack:'Welcome back', medToday:'Your medicines for today',
+    addMed:'+ Add medicine', taken:'✓ Taken', dueNow:'Due now',
+    upcoming:'Upcoming', missed:'Missed', takeDose:'Take dose', remove:'Remove',
+    missedAlert:'You have {n} missed dose{s} today — your monitors can see this.',
+    noMeds:'No medicines yet.\nTap below to add one!',
+    // Log
+    logTitle:'Dose history', logSub:'Your complete medicine log',
+    noDoses:'No doses recorded yet.\nTake your first dose to see history here!',
+    takenAt:'Taken', scheduled:'Scheduled', onTime:'✅ On time',
+    early:'⚡ Early', late:'⏰ Late', notTaken:'— not taken',
+    // Family
+    familyTitle:'Family & friends', familySub:'Let others track your progress live',
+    yourCode:'Your access code', tapCopy:'Tap to copy · Share with people you trust',
+    shareLink:'Or share a direct link', copy:'Copy',
+    inviteTitle:'Add monitor by email', inviteDesc:'The person must have a MedMate account.',
+    inviteBtn:'Add monitor', inviteEmail:'Email address',
+    monitors:'Current monitors', noMonitors:'No monitors added yet',
+    active:'Active',
+    // Monitor
+    monitorTitle:'Monitor', monitorSub:"Track multiple people's medicine progress live",
+    addMonitor:'➕ Add person to monitor', accessCode:'Access code',
+    addView:'Add & view dashboard', liveUpdates:'Live updates',
+    takenToday:'Taken today', streak:'🔥 Streak',
+    sendNudge:'💬 Send a nudge', nudgeTo:'Send a friendly reminder to',
+    sendNudgeBtn:'Send nudge 👋', recentNudges:'Recent nudges',
+    noOneMonitored:'No one being monitored yet.\nEnter a code above to start.',
+    // Settings
+    settingsTitle:'Settings', settingsSub:'Manage your account and preferences',
+    updateName:'Update name', displayName:'Display name',
+    language:'Language', langCurrent:'Currently: English',
+    appearance:'Appearance', darkMode:'Dark mode', darkOff:'Currently off', darkOn:'Currently on',
+    notifications:'Notifications', medReminders:'Medicine reminders', tapEnable:'Tap to enable',
+    data:'Data', clearDoses:'Clear dose logs', clearDoseSub:'Delete all recorded doses',
+    clearMeds:'Clear medicines', clearMedSub:'Delete all your medicines',
+    clearNudges:'Clear nudges', clearNudgeSub:'Delete all nudge messages',
+    clearAll:'Clear all data', clearAllSub:'Fresh start — keeps your account',
+    exportHistory:'Export dose history', exportSub:'Download report for your doctor',
+    security:'Security', changePass:'Change password', changePassSub:'Update your login password',
+    signOut:'Sign out', signOutSub:'Log out of your account',
+    deleteAcc:'Delete account', deleteAccSub:'Permanently remove everything',
+    weeklyReport:'Weekly report', weeklyReportSub:'View your 7-day summary',
+    refillReminders:'Refill reminders', refillSub:'Set low stock alerts per medicine',
+    about:'About', tagline:'Your smart medicine companion',
+    // Add medicine modal
+    addMedTitle:'Add medicine', addMedSub:'Set up reminders with scheduled times',
+    medName:'Medicine name', medNamePlaceholder:'e.g. Metformin 500mg',
+    dosageNotes:'Dosage / notes', dosagePlaceholder:'e.g. 1 tablet with food',
+    icon:'Icon', importance:'Importance level',
+    normal:'🟡 Normal — a bit flexible on timing',
+    critical:'🔴 Critical — must be taken on time',
+    flexible:'🟢 Flexible — any time of day is fine',
+    reminderTimes:'Reminder times', addTime:'+ Add another time',
+    expiryLabel:'Photo must be taken within',
+    // Dose modal
+    uploadPhoto:'Upload a photo of your medicine to confirm',
+    uploadBox:'Upload from gallery', uploadTap:'Tap to choose a photo of your medicine',
+    howFeel:'How do you feel? (optional)', feelPlaceholder:'e.g. Felt dizzy, took with food...',
+    cancel:'Cancel', markTaken:'✓ Mark as taken', capture:'📸 Capture',
+    verifying:'🔍 AI is verifying your photo...', processing:'⏳ Processing image...',
+    // Auth
+    signIn:'Sign in', createAcc:'Create account', noAcc:"No account?", createOne:'Create one',
+    haveAcc:'Already have an account?', signInLink:'Sign in',
+    yourName:'Your name', namePlaceholder:'e.g. Ahmad',
+    email:'Email', password:'Password', passPlaceholder:'Min. 6 characters',
+    savedDevices:'Saved on this device',
+    // Toasts
+    medAdded:'Medicine added!', removed:'Removed', doseTaken:'✅ Dose marked as taken!',
+    inviteSent:'added as monitor', codeCopied:'Code copied!', linkCopied:'Link copied!',
+    nudgeSent:'Nudge sent to', nameUpdated:'✅ Name updated!', passUpdated:'✅ Password updated!',
+  },
+  ms: {
+    // Nav
+    home:'Utama', log:'Log', family:'Keluarga', monitor:'Pantau',
+    // Home
+    welcomeBack:'Selamat kembali', medToday:'Ubat anda untuk hari ini',
+    addMed:'+ Tambah ubat', taken:'✓ Diambil', dueNow:'Masa sekarang',
+    upcoming:'Akan datang', missed:'Terlepas', takeDose:'Ambil dos', remove:'Buang',
+    missedAlert:'Anda ada {n} dos terlepas hari ini — pemantau anda boleh lihat ini.',
+    noMeds:'Tiada ubat lagi.\nKetik di bawah untuk tambah!',
+    // Log
+    logTitle:'Sejarah dos', logSub:'Log ubat lengkap anda',
+    noDoses:'Tiada dos direkodkan lagi.\nAmbil dos pertama untuk lihat sejarah!',
+    takenAt:'Diambil', scheduled:'Dijadual', onTime:'✅ Tepat masa',
+    early:'⚡ Awal', late:'⏰ Lewat', notTaken:'— tidak diambil',
+    // Family
+    familyTitle:'Keluarga & rakan', familySub:'Biar orang lain pantau kemajuan anda secara langsung',
+    yourCode:'Kod akses anda', tapCopy:'Ketik untuk salin · Kongsi dengan orang yang anda percaya',
+    shareLink:'Atau kongsi pautan terus', copy:'Salin',
+    inviteTitle:'Tambah pemantau melalui e-mel', inviteDesc:'Orang itu mesti ada akaun MedMate.',
+    inviteBtn:'Tambah pemantau', inviteEmail:'Alamat e-mel',
+    monitors:'Pemantau semasa', noMonitors:'Tiada pemantau ditambah lagi',
+    active:'Aktif',
+    // Monitor
+    monitorTitle:'Pantau', monitorSub:'Jejak kemajuan ubat beberapa orang secara langsung',
+    addMonitor:'➕ Tambah orang untuk dipantau', accessCode:'Kod akses',
+    addView:'Tambah & lihat papan pemuka', liveUpdates:'Kemas kini langsung',
+    takenToday:'Diambil hari ini', streak:'🔥 Rentak',
+    sendNudge:'💬 Hantar peringatan', nudgeTo:'Hantar peringatan mesra kepada',
+    sendNudgeBtn:'Hantar peringatan 👋', recentNudges:'Peringatan terkini',
+    noOneMonitored:'Tiada orang dipantau lagi.\nMasukkan kod di atas untuk mula.',
+    // Settings
+    settingsTitle:'Tetapan', settingsSub:'Urus akaun dan keutamaan anda',
+    updateName:'Kemas kini nama', displayName:'Nama paparan',
+    language:'Bahasa', langCurrent:'Kini: Bahasa Malaysia',
+    appearance:'Penampilan', darkMode:'Mod gelap', darkOff:'Kini dimatikan', darkOn:'Kini dihidupkan',
+    notifications:'Pemberitahuan', medReminders:'Peringatan ubat', tapEnable:'Ketik untuk aktifkan',
+    data:'Data', clearDoses:'Padam log dos', clearDoseSub:'Padam semua dos direkodkan',
+    clearMeds:'Padam ubat', clearMedSub:'Padam semua ubat anda',
+    clearNudges:'Padam peringatan', clearNudgeSub:'Padam semua mesej peringatan',
+    clearAll:'Padam semua data', clearAllSub:'Mula semula — akaun dikekalkan',
+    exportHistory:'Eksport sejarah dos', exportSub:'Muat turun laporan untuk doktor',
+    security:'Keselamatan', changePass:'Tukar kata laluan', changePassSub:'Kemas kini kata laluan log masuk',
+    signOut:'Log keluar', signOutSub:'Log keluar dari akaun anda',
+    deleteAcc:'Padam akaun', deleteAccSub:'Buang semua data secara kekal',
+    weeklyReport:'Laporan mingguan', weeklyReportSub:'Lihat ringkasan 7 hari anda',
+    refillReminders:'Peringatan isi semula', refillSub:'Tetapkan amaran stok rendah setiap ubat',
+    about:'Tentang', tagline:'Teman ubat pintar anda',
+    // Add medicine modal
+    addMedTitle:'Tambah ubat', addMedSub:'Tetapkan peringatan dengan masa yang dijadual',
+    medName:'Nama ubat', medNamePlaceholder:'cth. Metformin 500mg',
+    dosageNotes:'Dos / nota', dosagePlaceholder:'cth. 1 tablet dengan makanan',
+    icon:'Ikon', importance:'Tahap kepentingan',
+    normal:'🟡 Biasa — sedikit fleksibel dari segi masa',
+    critical:'🔴 Kritikal — mesti diambil tepat masa',
+    flexible:'🟢 Fleksibel — bila-bila masa dalam sehari',
+    reminderTimes:'Masa peringatan', addTime:'+ Tambah masa lain',
+    expiryLabel:'Foto mesti diambil dalam masa',
+    // Dose modal
+    uploadPhoto:'Muat naik foto ubat anda untuk sahkan',
+    uploadBox:'Muat naik dari galeri', uploadTap:'Ketik untuk pilih foto ubat anda',
+    howFeel:'Bagaimana perasaan anda? (pilihan)', feelPlaceholder:'cth. Rasa pening, ambil dengan makanan...',
+    cancel:'Batal', markTaken:'✓ Tandakan sebagai diambil', capture:'📸 Ambil foto',
+    verifying:'🔍 AI sedang mengesahkan foto anda...', processing:'⏳ Memproses imej...',
+    // Auth
+    signIn:'Log masuk', createAcc:'Cipta akaun', noAcc:'Tiada akaun?', createOne:'Cipta satu',
+    haveAcc:'Sudah ada akaun?', signInLink:'Log masuk',
+    yourName:'Nama anda', namePlaceholder:'cth. Ahmad',
+    email:'E-mel', password:'Kata laluan', passPlaceholder:'Min. 6 aksara',
+    savedDevices:'Disimpan di peranti ini',
+    // Toasts
+    medAdded:'Ubat ditambah!', removed:'Dibuang', doseTaken:'✅ Dos ditanda sebagai diambil!',
+    inviteSent:'ditambah sebagai pemantau', codeCopied:'Kod disalin!', linkCopied:'Pautan disalin!',
+    nudgeSent:'Peringatan dihantar kepada', nameUpdated:'✅ Nama dikemas kini!', passUpdated:'✅ Kata laluan dikemas kini!',
+  }
+};
+
+function t(key, vars) {
+  const str = TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS.en[key] || key;
+  if (!vars) return str;
+  return Object.entries(vars).reduce((s,[k,v]) => s.replace(`{${k}}`, v), str);
+}
+
 function applyLang() {
   const isMs = currentLang === 'ms';
-  document.getElementById('lang-badge').textContent = isMs ? 'BM' : 'EN';
-  document.getElementById('lang-sub').textContent = isMs ? 'Kini: Bahasa Malaysia' : 'Currently: English';
-  // Update all elements with data-en / data-ms
+  // Badge
+  const badge = document.getElementById('lang-badge');
+  const sub = document.getElementById('lang-sub');
+  if (badge) badge.textContent = isMs ? 'BM' : 'EN';
+  if (sub) sub.textContent = isMs ? 'Kini: Bahasa Malaysia' : 'Currently: English';
+  // Nav tabs
+  const tabKeys = ['home','log','family','monitor'];
+  document.querySelectorAll('.tab').forEach((tab, i) => {
+    if (i < tabKeys.length) tab.textContent = t(tabKeys[i]);
+  });
+  // Page headings
+  const phMap = {
+    'pg-home': ['ph','log','family','monitor'],
+  };
+  // All data-t attributes
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    const attr = el.getAttribute('data-t-attr') || 'textContent';
+    if (attr === 'placeholder') el.placeholder = t(key);
+    else el.textContent = t(key);
+  });
+  // Legacy data-en/data-ms
   document.querySelectorAll('[data-en]').forEach(el => {
     el.textContent = isMs ? el.getAttribute('data-ms') : el.getAttribute('data-en');
   });
-  // Update page headings
-  const labels = {
-    en: { home:'Home', log:'Log', family:'Family', monitor:'Monitor', settings:'⚙️',
-          addMed:'+ Add medicine', greetSub:'Your medicines for today' },
-    ms: { home:'Utama', log:'Log', family:'Keluarga', monitor:'Pantau', settings:'⚙️',
-          addMed:'+ Tambah ubat', greetSub:'Ubat anda untuk hari ini' }
-  };
-  const l = labels[currentLang];
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    const keys = ['home','log','family','monitor','settings'];
-    if (keys[i]) t.textContent = l[keys[i]];
-  });
+  // Dynamic content
+  refreshDynamicText();
+}
+
+function refreshDynamicText() {
+  // Update home subtitle
+  const ps = document.querySelector('#pg-home .ps');
+  if (ps) ps.textContent = t('medToday');
+  // Update log
+  const logPh = document.querySelector('#pg-log .ph');
+  const logPs = document.querySelector('#pg-log .ps');
+  if (logPh) logPh.textContent = t('logTitle');
+  if (logPs) logPs.textContent = t('logSub');
+  // Add medicine button
+  const addBtn = document.querySelector('#pg-home button.bo');
+  if (addBtn) addBtn.textContent = t('addMed');
+  // Re-render home if meds loaded
+  if (meds.length || doses.length) { rHome(); rLog(); }
 }
 
 // Apply on load
@@ -2184,30 +2366,56 @@ function openMedDB() {
   document.getElementById('m-meddb').classList.add('op');
 }
 
-function medAutocomplete(query) {
+async function medAutocomplete(query) {
   const el = document.getElementById('med-ac');
-  const q = query.toLowerCase().trim();
+  const q = query.trim();
   if (!q || q.length < 2) { el.style.display = 'none'; return; }
 
-  const results = MEDICINE_DB.filter(m =>
-    m.name.toLowerCase().includes(q) ||
-    (m.name + ' ' + m.dosage).toLowerCase().includes(q)
-  ).slice(0, 8);
+  // First show local results instantly
+  const local = MEDICINE_DB.filter(m => m.name.toLowerCase().includes(q.toLowerCase())).slice(0,3);
 
-  if (!results.length) { el.style.display = 'none'; return; }
+  // Then fetch from OpenFDA
+  try {
+    const res = await fetch(`https://api.fda.gov/drug/label.json?search=brand_name:${encodeURIComponent(q)}+generic_name:${encodeURIComponent(q)}&limit=8`);
+    const data = await res.json();
+    const fdaResults = (data.results || []).map(r => ({
+      name: r.openfda?.brand_name?.[0] || r.openfda?.generic_name?.[0] || q,
+      dosage: r.openfda?.strength?.[0] || '',
+      form: r.dosage_form?.[0] || 'tablet',
+      icon: '💊',
+      notes: r.indications_and_usage?.[0]?.substring(0,80) || ''
+    })).filter((m,i,arr) => arr.findIndex(x=>x.name===m.name)===i); // dedupe
 
-  el.style.display = 'block';
-  el.innerHTML = results.map((m, i) =>
-    `<div onmousedown="selectMedAC('${m.name}','${m.dosage}','${m.notes}','${m.icon}')"
-      style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;display:flex;align-items:center;gap:10px"
-      onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='transparent'">
-      <span style="font-size:16px">${m.icon}</span>
-      <div>
-        <div style="font-size:13px;font-weight:600">${m.name} <span style="color:var(--blue)">${m.dosage}</span> <span style="font-size:11px;color:var(--muted);font-weight:400">${m.form}</span></div>
-        <div style="font-size:11px;color:var(--muted)">${m.notes}</div>
-      </div>
-    </div>`
-  ).join('');
+    const combined = [...local, ...fdaResults].filter((m,i,arr) =>
+      arr.findIndex(x=>x.name.toLowerCase()===m.name.toLowerCase())===i
+    ).slice(0,10);
+
+    if (!combined.length) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.innerHTML = combined.map(m =>
+      `<div onmousedown="selectMedAC('${m.name.replace(/'/g,"\\'")}','${(m.dosage||'').replace(/'/g,"\\'")}','${(m.notes||'').replace(/'/g,"\\'").substring(0,60)}','${m.icon}')"
+        style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;display:flex;align-items:center;gap:10px"
+        onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:16px">${m.icon}</span>
+        <div>
+          <div style="font-size:13px;font-weight:600">${m.name} <span style="color:var(--blue);font-size:12px">${m.dosage}</span></div>
+          ${m.notes ? `<div style="font-size:11px;color:var(--muted)">${m.notes.substring(0,60)}${m.notes.length>60?'...':''}</div>` : ''}
+        </div>
+      </div>`
+    ).join('');
+  } catch(e) {
+    // Fallback to local only
+    if (!local.length) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.innerHTML = local.map(m =>
+      `<div onmousedown="selectMedAC('${m.name}','${m.dosage}','${m.notes}','${m.icon}')"
+        style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border)"
+        onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:16px">${m.icon}</span>
+        <span style="font-size:13px;font-weight:600;margin-left:8px">${m.name} ${m.dosage}</span>
+      </div>`
+    ).join('');
+  }
 }
 
 function selectMedAC(name, dosage, notes, icon) {
