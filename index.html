@@ -198,7 +198,14 @@ label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bot
 .p-normal{color:#d97706;background:#fffbeb;border-radius:var(--pr);padding:2px 8px;font-size:11px;font-weight:600}
 .p-flexible{color:#059669;background:#f0fdf4;border-radius:var(--pr);padding:2px 8px;font-size:11px;font-weight:600}
 
-/* ── SCROLL ── */
+/* ── ANIMATIONS ── */
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(8px)}}
+@keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.page.on{animation:fadeSlideIn .25s ease}
+.mi{animation:fadeSlideIn .2s ease}
+.card{animation:popIn .2s ease}
+.mb.op .mo{animation:fadeSlideIn .25s ease}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
@@ -709,6 +716,7 @@ window.addEventListener('fbready', () => {
       listenForNudges();
       checkOnboarding();
       setTimeout(checkRefillAlerts, 3000);
+      setTimeout(loadSavedMonitors, 1000);
     } else {
       currentUser = null;
       document.getElementById('auth-box').style.display = 'block';
@@ -795,6 +803,10 @@ async function doAuth() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Signing in...';
   try {
+    // If already logged in as someone else, sign out first
+    if (FB.auth.currentUser && FB.auth.currentUser.email !== email) {
+      await FB.signOut(FB.auth);
+    }
     if (isSignUp) {
       if (!name) { showAuthErr('Please enter your name.'); resetBtn(); return; }
       const cred = await FB.createUserWithEmailAndPassword(FB.auth, email, pass);
@@ -807,14 +819,14 @@ async function doAuth() {
     } else {
       await FB.signInWithEmailAndPassword(FB.auth, email, pass);
     }
-    // onAuthStateChanged handles the rest — no need to resetBtn here
+    // onAuthStateChanged handles the rest
   } catch(e) {
     showAuthErr(authErr(e.code));
     resetBtn();
   }
   function resetBtn() {
     btn.disabled = false;
-    btn.textContent = isSignUp ? 'Create account' : 'Sign in';
+    btn.textContent = isSignUp ? t('createAcc') : t('signIn');
   }
 }
 
@@ -1283,57 +1295,60 @@ async function removeMonitor(email) {
 // ── MONITOR DASHBOARD (live, multiple people) ──────────────────────────────────
 let monitoredPeople = {}; // { code: { user, unsubMeds, unsubDoses } }
 
+// ── Save/load monitored list to Firestore ──────────────────────────────────────
+async function loadSavedMonitors() {
+  try {
+    const snap = await FB.getDoc(FB.doc(FB.db,'users',currentUser.uid));
+    const saved = snap.data()?.monitoring || [];
+    for (const code of saved) {
+      if (!monitoredPeople[code]) await subscribeMonitor(code, true);
+    }
+    if (!saved.length) renderMonitoredList();
+  } catch(e) { renderMonitoredList(); }
+}
+
+async function saveMonitorList() {
+  try {
+    const codes = Object.keys(monitoredPeople);
+    await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { monitoring: codes });
+  } catch(e) {}
+}
+
 async function doMonitor() {
   const code = document.getElementById('mcode').value.trim().toUpperCase();
   if (code.length < 4) { toast('Enter a valid access code'); return; }
+  if (code === userCode) { toast('⚠️ You cannot monitor yourself!'); document.getElementById('mcode').value = ''; return; }
+  if (monitoredPeople[code]) { toast('Already monitoring this person'); document.getElementById('mcode').value = ''; return; }
+  document.getElementById('mcode').value = '';
+  await subscribeMonitor(code, false);
+}
 
-  // Block self-monitoring
-  if (code === userCode) {
-    toast('⚠️ You cannot monitor yourself!');
-    document.getElementById('mcode').value = '';
-    return;
-  }
-
-  // Already monitoring this person
-  if (monitoredPeople[code]) {
-    toast('Already monitoring this person');
-    document.getElementById('mcode').value = '';
-    return;
-  }
-
-  // Find target user by code
+async function subscribeMonitor(code, silent) {
   let targetUser = null;
   await new Promise(res => {
     const q = FB.query(FB.collection(FB.db,'users'), FB.where('code','==',code));
-    const u = FB.onSnapshot(q, snap => {
-      if (!snap.empty) targetUser = snap.docs[0].data();
-      u(); res();
-    });
+    const u = FB.onSnapshot(q, snap => { if (!snap.empty) targetUser = snap.docs[0].data(); u(); res(); });
   });
-
-  if (!targetUser) {
-    toast(`No user found for code ${code}`);
-    return;
-  }
-
-  document.getElementById('mcode').value = '';
-  toast(`✅ Now monitoring ${targetUser.name}`);
+  if (!targetUser) { if (!silent) toast(`No user found for code ${code}`); return; }
+  if (!silent) toast(`✅ Now monitoring ${targetUser.name}`);
 
   const uid = targetUser.uid;
   let tMeds = [], tDoses = [];
-
-  // Create dashboard card for this person
   const cardId = `monitor-${code}`;
   const listEl = document.getElementById('monitored-list');
+
+  // Remove empty state
+  const emptyEl = listEl.querySelector('.es');
+  if (emptyEl) emptyEl.remove();
+
   const card = document.createElement('div');
   card.id = cardId;
-  card.style.marginBottom = '16px';
+  card.style.cssText = 'margin-bottom:16px;animation:fadeSlideIn .3s ease';
   card.innerHTML = `<div class="card" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span> Loading ${targetUser.name}...</div>`;
   listEl.appendChild(card);
 
   function redraw() { renderDash(targetUser, tMeds, tDoses, card, code); }
 
-  // Live subscriptions
   const unsubMeds = FB.onSnapshot(
     FB.query(FB.collection(FB.db,'medicines'), FB.where('uid','==',uid)),
     snap => { tMeds = snap.docs.map(d=>({id:d.id,...d.data()})); redraw(); },
@@ -1355,25 +1370,21 @@ async function doMonitor() {
   });
 
   monitoredPeople[code] = { user: targetUser, unsubMeds, unsubDoses };
-  renderMonitoredList();
+  saveMonitorList();
 }
 
 function removeMonitored(code) {
   const p = monitoredPeople[code];
-  if (p) {
-    try { p.unsubMeds(); p.unsubDoses(); } catch(e) {}
-    delete monitoredPeople[code];
-  }
+  if (p) { try { p.unsubMeds(); p.unsubDoses(); } catch(e) {} delete monitoredPeople[code]; }
   const card = document.getElementById(`monitor-${code}`);
-  if (card) card.remove();
-  renderMonitoredList();
+  if (card) { card.style.animation = 'fadeOut .2s ease'; setTimeout(() => card.remove(), 200); }
+  saveMonitorList();
   toast('Removed from monitoring');
+  if (!Object.keys(monitoredPeople).length) renderMonitoredList();
 }
 
 function renderMonitoredList() {
-  // Just shows count — actual dashboards are rendered as cards below
-  const count = Object.keys(monitoredPeople).length;
-  if (count === 0) {
+  if (!Object.keys(monitoredPeople).length) {
     document.getElementById('monitored-list').innerHTML =
       '<div class="es"><div class="ei">👥</div>No one being monitored yet.<br>Enter a code above to start.</div>';
   }
