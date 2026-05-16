@@ -34,12 +34,13 @@ import {
 // ── YOUR FIREBASE CONFIG ─────────────────────────────────────────────────────
 // Go to https://console.firebase.google.com → your project → Project settings → Your apps
 const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey: "AIzaSyCaCL5z-sQAiN4wxrkC8Lrn3hbX_ykdYeY",
+  authDomain: "medmade-54333.firebaseapp.com",
+  projectId: "medmade-54333",
+  storageBucket: "medmade-54333.firebasestorage.app",
+  messagingSenderId: "894017733390",
+  appId: "1:894017733390:web:c65cb09f03fa120a9dcd5f",
+  measurementId: "G-8P1S6VYR8V"
 };
 
 const app  = initializeApp(firebaseConfig);
