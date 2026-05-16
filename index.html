@@ -1,2525 +1,512 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>MedMate – Medicine Reminder</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
-
-<!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-         signOut, onAuthStateChanged, updateProfile, updatePassword, deleteUser }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, onSnapshot,
-         query, where, orderBy, deleteDoc, updateDoc, serverTimestamp }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-// ─── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────────────────────
-// 1. Go to https://console.firebase.google.com
-// 2. Create a project → Add web app → copy the config object below
-const firebaseConfig = {
-  apiKey:            "AIzaSyCaCL5z-sQAiN4wxrkC8Lrn3hbX_ykdYeY",
-  authDomain:        "medmade-54333.firebaseapp.com",
-  projectId:         "medmade-54333",
-  storageBucket:     "medmade-54333.firebasestorage.app",
-  messagingSenderId: "894017733390",
-  appId:             "1:894017733390:web:c65cb09f03fa120a9dcd5f"
-};
-// ──────────────────────────────────────────────────────────────────────────────
-
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-
-window._fb = {
-  auth, db,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, updateProfile, updatePassword, deleteUser,
-  doc, setDoc, getDoc, getDocs, collection, addDoc, onSnapshot,
-  query, where, orderBy, deleteDoc, updateDoc, serverTimestamp
-};
-window.dispatchEvent(new Event('fbready'));
-</script>
-
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--blue-mid:#bfdbfe;
-  --bg:#f8fafc;--text:#0f172a;--muted:#64748b;
-  --border:#e2e8f0;--white:#ffffff;--red:#ef4444;--warn:#f59e0b;
-  --card-shadow:0 1px 8px rgba(15,23,42,.07);
-  --r:16px;--pr:100px;--nav-h:60px;
-}
-[data-theme="dark"]{
-  --blue:#60a5fa;--blue-dark:#3b82f6;--blue-light:#1e3a5f;--blue-mid:#1e40af;
-  --bg:#0f172a;--text:#f1f5f9;--muted:#94a3b8;
-  --border:#1e293b;--white:#1e293b;--red:#f87171;--warn:#fbbf24;
-  --card-shadow:0 1px 8px rgba(0,0,0,.3);
-}
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;-webkit-tap-highlight-color:transparent}
-
-/* ── AUTH ── */
-#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(160deg,#eff6ff 0%,#f8fafc 60%,#dbeafe 100%)}
-[data-theme="dark"] #auth-screen{background:linear-gradient(160deg,#0f172a 0%,#1e293b 100%)}
-.auth-box{background:var(--white);border-radius:24px;border:1px solid var(--border);padding:32px 28px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(37,99,235,.08)}
-.auth-logo{font-family:'DM Serif Display',serif;font-size:28px;color:var(--blue);text-align:center;margin-bottom:2px}
-.auth-tagline{text-align:center;font-size:12px;color:var(--muted);margin-bottom:24px}
-.auth-sub{font-size:15px;font-weight:600;color:var(--text);margin-bottom:18px}
-.auth-toggle{text-align:center;font-size:13px;color:var(--muted);margin-top:16px}
-.auth-toggle span{color:var(--blue);cursor:pointer;font-weight:600}
-
-/* ── NAV — bottom tab bar on mobile ── */
-#app-screen{display:none}
-.nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:var(--nav-h);position:sticky;top:0;z-index:100;gap:8px;box-shadow:0 1px 0 var(--border)}
-.logo{font-family:'DM Serif Display',serif;font-size:19px;color:var(--blue);flex-shrink:0}
-.tabs{display:flex;gap:1px}
-.tab{padding:7px 11px;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .18s;white-space:nowrap}
-.tab.on{background:var(--blue-light);color:var(--blue);font-weight:700}
-.nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.uchip{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap;max-width:64px;overflow:hidden;text-overflow:ellipsis}
-.dark-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .2s}
-
-/* ── PAGES ── */
-.page{display:none;padding:16px 14px;max-width:480px;margin:0 auto;padding-bottom:36px}
-.page.on{display:block}
-.ph{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:2px;line-height:1.25}
-.ps{font-size:12px;color:var(--muted);margin-bottom:18px}
-
-/* ── CARDS ── */
-.card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:16px;margin-bottom:12px;box-shadow:var(--card-shadow)}
-.ct{font-weight:700;font-size:14px;margin-bottom:12px;color:var(--text)}
-
-/* ── FORM ── */
-input,select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:inherit;font-size:15px;color:var(--text);background:var(--bg);outline:none;transition:all .2s;-webkit-appearance:none}
-input:focus,select:focus{border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
-.fld{margin-bottom:14px}
-
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:13px 20px;border-radius:var(--pr);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .18s;letter-spacing:.1px;-webkit-tap-highlight-color:transparent}
-.bp{background:var(--blue);color:#fff;width:100%;box-shadow:0 2px 8px rgba(37,99,235,.25)}.bp:hover{background:var(--blue-dark)}.bp:active{transform:scale(.98)}.bp:disabled{background:var(--blue-mid);cursor:default;box-shadow:none}
-.bo{background:transparent;border:1.5px solid var(--border);color:var(--text)}.bo:hover{background:var(--bg);border-color:var(--blue)}.bo:active{transform:scale(.98)}
-.bd{background:transparent;color:var(--red);border:1.5px solid #fecaca}.bd:hover{background:#fef2f2}
-.bnudge{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;box-shadow:0 2px 8px rgba(99,102,241,.3)}.bnudge:hover{opacity:.9}
-.sm{padding:8px 13px;font-size:12px}
-
-/* ── BADGES ── */
-.badge{display:inline-block;padding:4px 10px;border-radius:var(--pr);font-size:11px;font-weight:600}
-.bg{background:var(--blue-light);color:var(--blue)}.br{background:#fef2f2;color:var(--red)}
-.bw{background:#fffbeb;color:var(--warn)}.bx{background:var(--bg);color:var(--muted)}
-
-/* ── MED ITEM ── */
-.mi{display:flex;align-items:center;gap:12px;padding:14px;background:var(--white);border:1.5px solid var(--border);border-radius:16px;margin-bottom:10px;box-shadow:var(--card-shadow);transition:all .18s;cursor:default}
-.mi:active{transform:scale(.99)}
-.mico{width:44px;height:44px;border-radius:12px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.mnm{font-weight:700;font-size:14px}.msb{font-size:12px;color:var(--muted);margin-top:2px}
-.mac{display:flex;flex-direction:column;gap:6px;align-items:flex-end;margin-left:auto}
-
-/* ── DOSE ROW ── */
-.dr{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
-.dr:last-child{border-bottom:none}
-.dth{width:46px;height:46px;border-radius:10px;background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
-.dth img{width:46px;height:46px;border-radius:10px;object-fit:cover}
-.dnm{font-size:14px;font-weight:600}.dtm{font-size:12px;color:var(--muted);margin-top:1px}
-
-/* ── MODAL — slides up from bottom on mobile ── */
-.mb{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
-@media(min-width:520px){.mb{align-items:center}}
-.mb.op{display:flex}
-.mo{background:var(--white);border-radius:24px 24px 0 0;padding:24px 20px 32px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(15,23,42,.15)}
-@media(min-width:520px){.mo{border-radius:24px;padding:24px}}
-.mo-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 18px}
-.mt{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:3px}
-.ms{font-size:13px;color:var(--muted);margin-bottom:18px}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--white);padding:11px 22px;border-radius:var(--pr);font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.15)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── ALERT ── */
-.ab{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;font-size:13px;color:#92400e;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-
-/* ── FRIENDS ── */
-.fi{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
-.fi:last-child{border-bottom:none}
-.fav{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-dark));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;margin-right:10px;flex-shrink:0}
-
-/* ── CODE BOX ── */
-.cb{background:var(--bg);border:2px dashed var(--blue-mid);border-radius:12px;padding:14px;text-align:center;font-size:24px;font-weight:700;letter-spacing:6px;color:var(--blue);cursor:pointer;user-select:all;transition:all .2s}
-.cb:active{background:var(--blue-light)}
-
-/* ── AI STATUS ── */
-.ais{border-radius:12px;padding:13px;font-size:13px;margin-top:8px;font-weight:500}
-.ais.chk{background:#eff6ff;color:var(--blue)}
-.ais.ok{background:#f0fdf4;color:#16a34a}
-.ais.no{background:#fef2f2;color:var(--red)}
-
-/* ── MONITOR HEADER ── */
-.mhdr{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%);border-radius:var(--r);padding:20px;margin-bottom:14px;color:#fff}
-.sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px}
-.sb{background:rgba(255,255,255,.18);border-radius:12px;padding:12px;text-align:center}
-.sn{font-size:22px;font-weight:700;color:#fff}.sl{font-size:10px;color:rgba(255,255,255,.75);margin-top:2px}
-.sd{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
-.dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
-.tk{background:var(--blue-light);color:var(--blue)}.mk{background:#fef2f2;color:var(--red)}.ft{background:var(--bg);color:var(--muted)}
-
-/* ── NUDGE ── */
-.nudge-box{background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1.5px solid #c7d2fe;border-radius:14px;padding:16px;margin-top:12px}
-[data-theme="dark"] .nudge-box{background:linear-gradient(135deg,#1e1b4b,#2e1065);border-color:#3730a3}
-.nudge-history{max-height:120px;overflow-y:auto;margin-top:10px}
-.nudge-item{font-size:11px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px}
-.nudge-item:last-child{border-bottom:none}
-
-/* ── SETTINGS ROWS ── */
-.setting-row{display:flex;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;-webkit-tap-highlight-color:transparent}
-.setting-row:last-child{border-bottom:none}
-.setting-row:active{background:var(--bg)}
-.setting-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-
-/* ── MISC ── */
-.es{text-align:center;padding:40px 16px;color:var(--muted);font-size:13px}
-.ei{font-size:36px;margin-bottom:10px}
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--blue-mid);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
-@keyframes spin{to{transform:rotate(360deg)}}
-.live-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);display:inline-block;margin-right:5px;animation:pulse 1.5s ease infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:20px 0 8px;padding:0 2px}
-.divider{height:1px;background:var(--border);margin:16px 0}
-
-/* ── UPLOAD BOX ── */
-#upload-box{border:2px dashed var(--blue-mid);border-radius:14px;padding:28px 20px;text-align:center;cursor:pointer;background:var(--blue-light);transition:all .2s}
-#upload-box:active{background:#dbeafe}
-
-/* ── PRIORITY PILLS ── */
-.p-critical{color:#dc2626;background:#fef2f2;border-radius:var(--pr);padding:2px 8px;font-size:11px;font-weight:600}
-.p-normal{color:#d97706;background:#fffbeb;border-radius:var(--pr);padding:2px 8px;font-size:11px;font-weight:600}
-.p-flexible{color:#059669;background:#f0fdf4;border-radius:var(--pr);padding:2px 8px;font-size:11px;font-weight:600}
-
-/* ── ANIMATIONS ── */
-@keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(8px)}}
-@keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.page.on{animation:fadeSlideIn .25s ease}
-.mi{animation:fadeSlideIn .2s ease}
-.card{animation:popIn .2s ease}
-.mb.op .mo{animation:fadeSlideIn .25s ease}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0ea5e9"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>MedMate — Smart Medicine Tracker</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<!-- ══════════ AUTH SCREEN ══════════ -->
-<div id="auth-screen">
-  <!-- Loading spinner -->
-  <div id="auth-loading" style="display:flex;flex-direction:column;align-items:center;gap:14px">
-    <div style="width:48px;height:48px;border:3px solid var(--mint-mid);border-top-color:var(--mint);border-radius:50%;animation:spin .7s linear infinite"></div>
-    <div style="font-size:14px;color:var(--muted)">Loading MedMate...</div>
+<!-- ═══════════════════════════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════════════════════════════ -->
+<div id="auth-screen" style="display:flex">
+
+  <!-- Loading spinner shown while Firebase checks session -->
+  <div id="auth-loading">
+    <span class="spinner" style="border-color:rgba(14,165,233,.3);border-top-color:#0ea5e9;width:24px;height:24px"></span>
+    Checking session…
   </div>
-  <!-- Auth box -->
-  <div id="auth-box" style="display:none;width:100%;max-width:400px">
-    <div class="auth-box">
-      <div class="auth-logo">💊 MedMate</div>
-      <div class="auth-tagline">Your smart medicine companion</div>
-      <!-- Saved accounts on this device -->
-      <div id="saved-accounts"></div>
-      <div id="accounts-divider" style="display:none;height:1px;background:var(--border);margin:16px 0;position:relative">
-        <span style="position:absolute;left:50%;transform:translateX(-50%);top:-9px;background:var(--white);padding:0 10px;font-size:11px;color:var(--muted)">or sign in with email</span>
-      </div>
-      <!-- Sign in form -->
-      <div id="auth-form">
-        <div class="auth-sub" id="auth-subtitle">Sign in to your account</div>
-        <div class="auth-err" id="auth-err" style="display:none"></div>
-        <div id="name-wrap" class="fld" style="display:none">
-          <label>Your name</label>
-          <input id="a-name" placeholder="e.g. Ahmad"/>
-        </div>
-        <div class="fld"><label>Email</label><input type="email" id="a-email" placeholder="you@example.com"/></div>
-        <div class="fld"><label>Password</label><input type="password" id="a-pass" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter')doAuth()"/></div>
-        <button class="btn bp" id="auth-btn" onclick="doAuth()">Sign in</button>
-        <div class="auth-toggle" id="auth-toggle">
-          No account? <span onclick="toggleAuth()">Create one</span>
-        </div>
-      </div>
+
+  <div id="auth-box" style="display:none">
+    <div class="auth-logo">
+      <span class="logo-icon">💊</span>
+      <h1>MedMate</h1>
+      <p id="auth-subtitle">Sign in to your account</p>
     </div>
+
+    <!-- Error message -->
+    <div id="auth-err"></div>
+
+    <!-- Saved accounts list -->
+    <div id="saved-accounts"></div>
+    <hr id="accounts-divider" style="display:none"/>
+
+    <!-- Name field (sign-up only) -->
+    <div id="name-wrap" class="auth-field" style="display:none">
+      <label>Your name</label>
+      <input id="a-name" type="text" placeholder="e.g. Ahmad bin Ali" autocomplete="name"/>
+    </div>
+
+    <div class="auth-field">
+      <label>Email</label>
+      <input id="a-email" type="email" placeholder="you@email.com" autocomplete="email"/>
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input id="a-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doAuth()"/>
+    </div>
+
+    <button id="auth-btn" onclick="doAuth()">Sign in</button>
+
+    <p id="auth-toggle" style="margin-top:14px">
+      No account? <span onclick="toggleAuth()">Create one</span>
+    </p>
   </div>
 </div>
 
-<!-- ══════════ APP SCREEN ══════════ -->
+<!-- ═══════════════════════════════════════════════════════════
+     APP SCREEN
+════════════════════════════════════════════════════════════ -->
 <div id="app-screen">
-  <nav class="nav">
-    <span class="logo">💊 MedMate</span>
-    <div class="tabs">
-      <button class="tab on" onclick="go('home',this)">Home</button>
-      <button class="tab"    onclick="go('log',this)">Log</button>
-      <button class="tab"    onclick="go('family',this)">Family</button>
-      <button class="tab"    onclick="go('monitor',this)">Monitor</button>
-      <button class="tab"    onclick="go('settings',this)">⚙️</button>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-logo">💊 MedMate</div>
+    <div id="home-avatar" onclick="go('settings', document.querySelectorAll('.nav-item')[4])"></div>
+  </header>
+
+  <!-- ── HOME PAGE ──────────────────────────────────────────── -->
+  <div id="pg-home" class="page active">
+
+    <div class="home-greeting">
+      <h2 id="greet">Good morning 👋</h2>
+      <p id="home-date"></p>
     </div>
-    <div class="nav-right">
-      <button class="dark-btn" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
+
+    <!-- Progress ring -->
+    <div class="progress-ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 36 36">
+        <circle class="ring-bg" cx="18" cy="18" r="15.9"/>
+        <circle id="progress-fill" class="ring-fill" cx="18" cy="18" r="15.9"
+                stroke-dasharray="0, 100"/>
+      </svg>
+      <div class="ring-label">
+        <span id="progress-text" style="font-size:20px;font-weight:700">0%</span>
+      </div>
+      <p class="progress-sub">
+        Today's adherence · <span id="med-count">0</span> doses scheduled
+      </p>
     </div>
+
+    <!-- Alerts -->
+    <div id="alerts"></div>
+
+    <!-- Medicine list -->
+    <div class="section-title">Today's Medicines</div>
+    <div id="med-home"></div>
+
+  </div>
+
+  <!-- ── LOG PAGE ───────────────────────────────────────────── -->
+  <div id="pg-log" class="page">
+    <div class="section-title" style="margin-top:4px">Dose History</div>
+    <div id="log-list"></div>
+    <div style="margin-top:16px">
+      <button class="btn-secondary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px"
+              onclick="exportPDF()">
+        📄 Export as HTML Report
+      </button>
+    </div>
+  </div>
+
+  <!-- ── ADD PAGE ───────────────────────────────────────────── -->
+  <div id="pg-add" class="page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:60px">
+    <div style="font-size:56px;margin-bottom:16px">💊</div>
+    <p style="color:var(--text-secondary);font-size:14px;text-align:center">
+      Tap the <strong>+</strong> button to add a new medicine
+    </p>
+  </div>
+
+  <!-- ── FAMILY PAGE ────────────────────────────────────────── -->
+  <div id="pg-family" class="page">
+    <div class="section-title" style="margin-top:4px">Your Monitors</div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">
+      People who can monitor your medicine adherence
+    </p>
+    <div id="flist"></div>
+
+    <div style="margin-top:16px">
+      <div class="form-field">
+        <label>Invite by Email</label>
+        <div style="display:flex;gap:8px">
+          <input id="inv-email" type="email" placeholder="friend@email.com" style="flex:1"/>
+          <button class="btn-primary" onclick="doInvite()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share your access code -->
+    <div class="glass-card" style="margin-top:20px">
+      <div class="section-title" style="margin-top:0">Your Access Code</div>
+      <div class="code-display" id="acode" onclick="cpCode()" title="Tap to copy">——</div>
+      <p style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:12px">
+        Tap to copy · Share with family to let them monitor you
+      </p>
+      <div class="share-row">
+        <input id="slink" readonly placeholder="Shareable link"/>
+        <button class="btn-small" onclick="cpLink()">Copy link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MONITOR PAGE ───────────────────────────────────────── -->
+  <div id="pg-monitor" class="page">
+    <div class="section-title" style="margin-top:4px">Monitor Dashboard</div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px">
+      Enter a friend's access code to watch their medicine progress in real-time
+    </p>
+
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <input id="mcode" placeholder="Enter code e.g. AB12CD" style="flex:1;text-transform:uppercase"
+             oninput="this.value=this.value.toUpperCase()"
+             onkeydown="if(event.key==='Enter') doMonitor()"/>
+      <button class="btn-primary" onclick="doMonitor()">Monitor</button>
+    </div>
+
+    <div id="monitored-list"></div>
+  </div>
+
+  <!-- ── SETTINGS PAGE ─────────────────────────────────────── -->
+  <div id="pg-settings" class="page">
+
+    <!-- Profile card -->
+    <div class="profile-card">
+      <label for="pic-input" style="margin:0;text-transform:none;letter-spacing:0;cursor:pointer">
+        <div id="settings-avatar" title="Tap to change photo"></div>
+      </label>
+      <input id="pic-input" type="file" accept="image/*" style="display:none" onchange="uploadProfilePic(event)"/>
+      <div class="profile-info">
+        <h3 id="settings-name">—</h3>
+        <p id="settings-email">—</p>
+        <p id="settings-code" style="margin-top:4px;font-size:11px;opacity:.7"></p>
+      </div>
+    </div>
+
+    <!-- Name update -->
+    <div class="settings-section">
+      <div class="settings-section-label">Profile</div>
+      <div class="form-field">
+        <label>Display name</label>
+        <div style="display:flex;gap:8px">
+          <input id="s-name" type="text" placeholder="Your name" style="flex:1"/>
+          <button class="btn-primary" onclick="updateName()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preferences -->
+    <div class="settings-section">
+      <div class="settings-section-label">Preferences</div>
+
+      <!-- Dark mode -->
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">
+            <span id="dark-icon-moon">🌙</span>
+            <span id="dark-icon-sun" style="display:none">☀️</span>
+            Dark Mode
+          </div>
+          <div class="settings-row-sub" id="dark-mode-label">Currently off</div>
+        </div>
+        <div id="dark-toggle" class="toggle-wrap" onclick="toggleDark()">
+          <div id="dark-knob" class="toggle-knob"></div>
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">🌐 Language</div>
+          <div class="settings-row-sub" id="lang-sub">Currently: English</div>
+        </div>
+        <span id="lang-badge" class="settings-badge" onclick="toggleLang()" style="cursor:pointer">EN</span>
+      </div>
+
+      <!-- Notifications -->
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">🔔 Reminders</div>
+          <div class="settings-row-sub" id="notif-label">Enable push notifications</div>
+        </div>
+        <button class="settings-badge" id="notif-badge" onclick="requestNotifPermission()"
+                style="cursor:pointer;border:none;font-family:inherit">Enable</button>
+      </div>
+    </div>
+
+    <!-- Refill tracker -->
+    <div class="settings-section">
+      <div class="settings-section-label">Refill Tracker</div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">💊 Stock & Alerts</div>
+          <div class="settings-row-sub">Set stock levels and low-supply alerts</div>
+        </div>
+        <button class="btn-small" onclick="openRefillSettings()">Manage</button>
+      </div>
+    </div>
+
+    <!-- Reports -->
+    <div class="settings-section">
+      <div class="settings-section-label">Reports</div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">📊 Weekly Summary</div>
+          <div class="settings-row-sub">See your 7-day adherence breakdown</div>
+        </div>
+        <button class="btn-small" onclick="showWeeklyReport()">View</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">📄 Export History</div>
+          <div class="settings-row-sub">Download dose log as HTML report</div>
+        </div>
+        <button class="btn-small" onclick="exportPDF()">Export</button>
+      </div>
+    </div>
+
+    <!-- Account -->
+    <div class="settings-section">
+      <div class="settings-section-label">Account</div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">🔒 Change Password</div>
+          <div class="settings-row-sub">Update your account password</div>
+        </div>
+        <button class="btn-small" onclick="openChangePass()">Change</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">🚪 Sign Out</div>
+          <div class="settings-row-sub">Sign out from this device</div>
+        </div>
+        <button class="btn-small" onclick="doSignOut()">Sign out</button>
+      </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="settings-section">
+      <div class="settings-section-label" style="color:var(--red)">Danger Zone</div>
+      <div class="glass-card" style="border-color:rgba(239,68,68,.2)">
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px">
+          These actions are permanent and cannot be undone.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn-danger full" onclick="confirmClear('doses')">🗑️ Clear dose history</button>
+          <button class="btn-danger full" onclick="confirmClear('medicines')">🗑️ Clear all medicines</button>
+          <button class="btn-danger full" onclick="confirmClear('all')">🗑️ Clear all data</button>
+          <button class="btn-danger full" style="margin-top:6px;border-color:rgba(239,68,68,.5)"
+                  onclick="confirmDeleteAccount()">⚠️ Delete my account</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── BOTTOM NAV ─────────────────────────────────────────── -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="go('home', this)">
+      <span class="nav-icon">🏠</span>Home
+    </button>
+    <button class="nav-item" onclick="go('log', this)">
+      <span class="nav-icon">📋</span>Log
+    </button>
+    <button class="nav-item" onclick="openAdd()">
+      <span class="nav-icon">➕</span>Add
+    </button>
+    <button class="nav-item" onclick="go('monitor', this)">
+      <span class="nav-icon">📺</span>Monitor
+    </button>
+    <button class="nav-item" onclick="go('settings', this)">
+      <span class="nav-icon">⚙️</span>Settings
+    </button>
   </nav>
 
-  <!-- HOME -->
-  <div class="page on" id="pg-home">
-    <!-- Hero header card -->
-    <div style="background:linear-gradient(135deg,var(--blue) 0%,var(--blue-dark) 100%);border-radius:20px;padding:20px;margin-bottom:16px;margin-top:8px;color:#fff;position:relative;overflow:hidden">
-      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
-      <div style="position:absolute;bottom:-30px;right:20px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;position:relative">
-        <div>
-          <div style="font-size:12px;opacity:.75;margin-bottom:3px;font-weight:500">Welcome back</div>
-          <div id="greet" style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;line-height:1.2">Good day 👋</div>
-          <div style="font-size:12px;opacity:.7;margin-top:6px" id="home-date"></div>
-        </div>
-        <div id="home-avatar" style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.3)">?</div>
-      </div>
+  <!-- ── FAB (Add medicine shortcut) ───────────────────────── -->
+  <button class="fab" onclick="openAdd()" title="Add medicine" aria-label="Add medicine">＋</button>
+
+</div><!-- /app-screen -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════════════════ -->
+
+<!-- Add Medicine -->
+<div id="m-add" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💊 Add Medicine</div>
+
+    <div class="form-field">
+      <label>Medicine Name</label>
+      <input id="mn" type="text" placeholder="e.g. Metformin 500mg"
+             oninput="medAutocomplete(this.value)" onblur="setTimeout(closeMedAC,200)"/>
+      <div id="med-ac"></div>
     </div>
-    <div id="alerts"></div>
-    <div id="med-home"></div>
-    <button class="btn bo" style="width:100%;margin-top:6px" onclick="openAdd()">+ Add medicine</button>
-  </div>
 
-  <!-- LOG -->
-  <div class="page" id="pg-log">
-    <div style="padding-top:16px">
-      <div class="ph">Dose history</div>
-      <div class="ps">All verified doses with photo proof</div>
-      <div id="log-list"></div>
-    </div>
-  </div>
-
-  <!-- FAMILY -->
-  <div class="page" id="pg-family">
-    <div style="padding-top:16px">
-      <div class="ph">Family & friends</div>
-      <div class="ps">Let others track your progress in real time</div>
-      <div class="card">
-        <div class="ct">Your access code</div>
-        <div class="cb" id="acode" onclick="cpCode()">------</div>
-        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px">Tap to copy · Share with people you trust</div>
-        <div style="margin:12px 0;height:1px;background:var(--border)"></div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Or share a direct link</div>
-        <div style="display:flex;gap:7px">
-          <input id="slink" readonly style="font-size:11px"/>
-          <button class="btn bo sm" onclick="cpLink()">Copy</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ct">Add monitor by email</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">The person must have a MedMate account. They use their own login to view your dashboard via the Monitor tab.</div>
-        <div class="fld"><label>Email address</label><input type="email" id="inv-email" placeholder="friend@example.com"/></div>
-        <button class="btn bp" onclick="doInvite()">Add monitor</button>
-      </div>
-      <div class="card">
-        <div class="ct">Current monitors</div>
-        <div id="flist"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MONITOR -->
-  <div class="page" id="pg-monitor">
-    <div style="padding-top:16px">
-      <div class="ph">Monitor</div>
-      <div class="ps">Track multiple people's medicine progress live</div>
-
-      <div class="card">
-        <div class="ct">➕ Add person to monitor</div>
-        <div class="fld">
-          <label>Access code</label>
-          <input id="mcode" placeholder="e.g. A3F9X2" maxlength="6"
-            style="text-transform:uppercase;letter-spacing:4px;font-size:20px;text-align:center"/>
-        </div>
-        <button class="btn bp" onclick="doMonitor()">Add & view dashboard</button>
-      </div>
-
-      <div id="monitored-list"></div>
-    </div>
-  </div>
-
-  <!-- SETTINGS -->
-  <div class="page" id="pg-settings">
-    <div style="padding-top:16px">
-      <div class="ph">Settings</div>
-      <div class="ps">Manage your account and preferences</div>
-
-      <!-- PROFILE CARD -->
-      <div class="card">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-          <!-- Profile photo -->
-          <div style="position:relative;flex-shrink:0" onclick="document.getElementById('profile-pic-input').click()">
-            <div id="settings-avatar" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-dark));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;overflow:hidden">?</div>
-            <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid var(--white)">📷</div>
-          </div>
-          <input type="file" id="profile-pic-input" accept="image/*" style="display:none" onchange="uploadProfilePic(event)"/>
-          <div>
-            <div id="settings-name" style="font-size:16px;font-weight:700"></div>
-            <div id="settings-email" style="font-size:12px;color:var(--muted);margin-top:2px"></div>
-            <div id="settings-code" style="font-size:11px;color:var(--blue);margin-top:2px;font-weight:600"></div>
-          </div>
-        </div>
-        <div class="fld"><label>Display name</label><input id="s-name" placeholder="Your name"/></div>
-        <button class="btn bp" onclick="updateName()">Update name</button>
-      </div>
-
-      <!-- LANGUAGE -->
-      <div class="section-label">Language</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div class="setting-row" onclick="toggleLang()">
-          <div class="setting-icon" style="background:#eff6ff">🌐</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600" id="lang-title">Language</div>
-            <div style="font-size:12px;color:var(--muted)" id="lang-sub">Currently: English</div>
-          </div>
-          <span class="badge bg" id="lang-badge">EN</span>
-        </div>
-      </div>
-
-      <!-- APPEARANCE -->
-      <div class="section-label">Appearance</div>
-      <div class="card" style="padding:0">
-        <div onclick="toggleDark()" style="display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:36px;height:36px;border-radius:10px;background:var(--mint-bg);display:flex;align-items:center;justify-content:center;font-size:18px">🌙</div>
-            <div>
-              <div style="font-size:14px;font-weight:600">Dark mode</div>
-              <div style="font-size:11px;color:var(--muted)" id="dark-mode-label">Currently off</div>
-            </div>
-          </div>
-          <div id="dark-toggle" style="width:44px;height:24px;border-radius:100px;background:var(--border);position:relative;transition:background .3s;cursor:pointer">
-            <div id="dark-knob" style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:all .3s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- NOTIFICATIONS -->
-      <div class="section-label">Notifications</div>
-      <div class="card" style="padding:0">
-        <div onclick="requestNotifPermission()" style="display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:36px;height:36px;border-radius:10px;background:#fef6ed;display:flex;align-items:center;justify-content:center;font-size:18px">🔔</div>
-            <div>
-              <div style="font-size:14px;font-weight:600">Medicine reminders</div>
-              <div style="font-size:11px;color:var(--muted)" id="notif-label">Tap to enable</div>
-            </div>
-          </div>
-          <span class="badge" id="notif-badge" style="background:var(--sage);color:var(--muted)">Off</span>
-        </div>
-      </div>
-
-      <!-- DATA MANAGEMENT -->
-      <div class="section-label">Data</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div class="setting-row" onclick="confirmClear('doses')">
-          <div class="setting-icon" style="background:#fff7ed">📋</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600">Clear dose logs</div>
-            <div style="font-size:12px;color:var(--muted)">Delete all recorded doses</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-        <div class="setting-row" onclick="confirmClear('medicines')">
-          <div class="setting-icon" style="background:#eff6ff">💊</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600">Clear medicines</div>
-            <div style="font-size:12px;color:var(--muted)">Delete all your medicines</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-        <div class="setting-row" onclick="confirmClear('nudges')">
-          <div class="setting-icon" style="background:#f5f3ff">💬</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600">Clear nudges</div>
-            <div style="font-size:12px;color:var(--muted)">Delete all nudge messages</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-        <div class="setting-row" onclick="confirmClear('all')">
-          <div class="setting-icon" style="background:#fef2f2">🗑️</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600;color:var(--red)" data-en="Clear all data" data-ms="Padam semua data">Clear all data</div>
-            <div style="font-size:12px;color:var(--muted)" data-en="Fresh start — keeps your account" data-ms="Mula semula — akaun dikekalkan">Fresh start — keeps your account</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-        <div class="setting-row" onclick="exportPDF()">
-          <div class="setting-icon" style="background:#f0fdf4">📄</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600" data-en="Export dose history" data-ms="Eksport sejarah dos">Export dose history</div>
-            <div style="font-size:12px;color:var(--muted)" data-en="Download report for your doctor" data-ms="Muat turun laporan untuk doktor">Download report for your doctor</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-      </div>
-
-      <!-- SECURITY -->
-      <div class="section-label">Security</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div class="setting-row" onclick="openChangePass()">
-          <div class="setting-icon" style="background:var(--blue-light)">🔑</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600">Change password</div>
-            <div style="font-size:12px;color:var(--muted)">Update your login password</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-        <div class="setting-row" onclick="doSignOut()">
-          <div class="setting-icon" style="background:var(--bg)">🚪</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600">Sign out</div>
-            <div style="font-size:12px;color:var(--muted)">Log out of your account</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-        <div class="setting-row" onclick="confirmDeleteAccount()">
-          <div class="setting-icon" style="background:#fef2f2">❌</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600;color:var(--red)">Delete account</div>
-            <div style="font-size:12px;color:var(--muted)">Permanently remove everything</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-      </div>
-
-      <!-- ABOUT -->
-      <div class="section-label">About</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div class="setting-row" onclick="showWeeklyReport()">
-          <div class="setting-icon" style="background:#eff6ff">📊</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600" data-en="Weekly report" data-ms="Laporan mingguan">Weekly report</div>
-            <div style="font-size:12px;color:var(--muted)" data-en="View your 7-day summary" data-ms="Lihat ringkasan 7 hari">View your 7-day summary</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-        <div class="setting-row" onclick="openRefillSettings()">
-          <div class="setting-icon" style="background:#fffbeb">💊</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600" data-en="Refill reminders" data-ms="Peringatan isi semula">Refill reminders</div>
-            <div style="font-size:12px;color:var(--muted)" data-en="Set low stock alerts per medicine" data-ms="Tetapkan amaran stok rendah">Set low stock alerts per medicine</div>
-          </div>
-          <span style="color:var(--muted);font-size:20px">›</span>
-        </div>
-      </div>
-
-      <div class="card" style="text-align:center;padding:24px">
-        <div style="font-size:32px;margin-bottom:8px">💊</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--blue)">MedMate</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">Version 1.0 · Built with ❤️</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:8px" data-en="Your smart medicine companion" data-ms="Teman ubat pintar anda">Your smart medicine companion</div>
-      </div>
-
-    </div>
-  </div>
-
-</div><!-- end app-screen -->
-
-<!-- CHANGE PASSWORD MODAL -->
-<div class="mb" id="m-pass">
-  <div class="mo">
-    <div class="mt">Change password</div>
-    <div class="ms">Enter your new password below</div>
-    <div class="fld"><label>New password</label><input type="password" id="new-pass" placeholder="Min. 6 characters"/></div>
-    <div class="fld"><label>Confirm new password</label><input type="password" id="confirm-pass" placeholder="Repeat password"/></div>
-    <div class="status" id="pass-status" style="margin-bottom:12px"></div>
-    <div style="display:flex;gap:9px">
-      <button class="btn bo" style="flex:1" onclick="cm('m-pass')">Cancel</button>
-      <button class="btn bp" style="flex:1" onclick="doChangePass()">Update password</button>
-    </div>
-  </div>
-</div>
-
-<!-- WEEKLY REPORT MODAL -->
-<div class="mb" id="m-report">
-  <div class="mo">
-    <div class="mo-handle"></div>
-    <div class="mt" data-en="Weekly Report" data-ms="Laporan Mingguan">Weekly Report</div>
-    <div class="ms" data-en="Your medicine summary for the past 7 days" data-ms="Ringkasan ubat anda untuk 7 hari lepas">Your medicine summary for the past 7 days</div>
-    <div id="report-content"></div>
-    <button class="btn bo" style="width:100%;margin-top:14px" onclick="cm('m-report')">Close</button>
-  </div>
-</div>
-
-<!-- REFILL REMINDER MODAL -->
-<div class="mb" id="m-refill">
-  <div class="mo">
-    <div class="mo-handle"></div>
-    <div class="mt" data-en="Refill Reminders" data-ms="Peringatan Isi Semula">Refill Reminders</div>
-    <div class="ms" data-en="Set how many doses remain before you get an alert" data-ms="Tetapkan baki dos sebelum amaran">Set how many doses remain before you get an alert</div>
-    <div id="refill-list"></div>
-    <button class="btn bo" style="width:100%;margin-top:14px" onclick="cm('m-refill')">Close</button>
-  </div>
-</div>
-
-<!-- ONBOARDING MODAL -->
-<div class="mb" id="m-onboard" style="align-items:flex-end">
-  <div class="mo" style="border-radius:24px 24px 0 0;padding-bottom:40px">
-    <div class="mo-handle"></div>
-    <div id="onboard-slides">
-      <!-- Slides rendered by JS -->
-    </div>
-    <div style="display:flex;justify-content:center;gap:6px;margin:16px 0" id="onboard-dots"></div>
-    <div style="display:flex;gap:9px">
-      <button class="btn bo" style="flex:1" id="onboard-skip" onclick="finishOnboard()">Skip</button>
-      <button class="btn bp" style="flex:1" id="onboard-next" onclick="nextOnboardSlide()">Next →</button>
-    </div>
-  </div>
-</div>
-
-<!-- MEDICINE DATABASE SEARCH MODAL -->
-<div class="mb" id="m-meddb">
-  <div class="mo">
-    <div class="mo-handle"></div>
-    <div class="mt" data-en="Medicine Database" data-ms="Pangkalan Data Ubat">Medicine Database</div>
-    <div class="ms" data-en="Search to auto-fill medicine details" data-ms="Cari untuk isi butiran ubat">Search to auto-fill medicine details</div>
-    <div class="fld">
-      <input id="meddb-search" placeholder="Type medicine name..." oninput="searchMedDB(this.value)"/>
-    </div>
-    <div id="meddb-results" style="max-height:300px;overflow-y:auto"></div>
-    <button class="btn bo" style="width:100%;margin-top:10px" onclick="cm('m-meddb')">Cancel</button>
-  </div>
-</div>
-
-<!-- ADD MEDICINE MODAL -->
-<div class="mb" id="m-add">
-  <div class="mo">
-    <div class="mo-handle"></div>
-    <div class="mt">Add medicine</div>
-    <div class="ms">Set up reminders with scheduled times</div>
-    <div class="fld"><label>Medicine name</label>
-      <div style="position:relative">
-        <input id="mn" placeholder="e.g. Metformin 500mg" autocomplete="off"
-          oninput="medAutocomplete(this.value)" onblur="setTimeout(()=>closeMedAC(),200)"/>
-        <div id="med-ac" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1.5px solid var(--blue);border-top:none;border-radius:0 0 12px 12px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 8px 20px rgba(0,0,0,.1)"></div>
-      </div>
-    </div>
-    <div class="fld"><label>Dosage / notes</label><input id="md" placeholder="e.g. 1 tablet with food"/></div>
-    <div class="fld"><label>Icon</label>
+    <div class="form-field">
+      <label>Icon</label>
       <select id="micon">
         <option value="💊">💊 Tablet / Capsule</option>
         <option value="💉">💉 Injection</option>
-        <option value="🩺">🩺 General</option>
         <option value="🫁">🫁 Inhaler</option>
         <option value="🧴">🧴 Liquid / Syrup</option>
         <option value="🩹">🩹 Patch</option>
+        <option value="👁️">👁️ Eye / Ear drops</option>
       </select>
     </div>
-    <div class="fld"><label>Importance level</label>
+
+    <div class="form-field">
+      <label>Dosage / Notes</label>
+      <input id="md" type="text" placeholder="e.g. Take with food, 500mg"/>
+    </div>
+
+    <div class="form-field">
+      <label>Priority</label>
       <select id="mpriority" onchange="updatePriorityHint()">
-        <option value="normal">🟡 Normal — a bit flexible on timing</option>
-        <option value="critical">🔴 Critical — must be taken on time</option>
-        <option value="flexible">🟢 Flexible — any time of day is fine</option>
+        <option value="normal">🟡 Normal — ±1 hour window</option>
+        <option value="critical">🔴 Critical — must take within 30 mins</option>
+        <option value="flexible">🟢 Flexible — any time during day</option>
       </select>
-    </div>
-    <div id="priority-hint" style="font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:12px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-      🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time
+      <div id="priority-hint" style="margin-top:8px;font-size:12px;color:var(--text-secondary);padding:8px 12px;background:var(--surface);border-radius:8px">
+        🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time
+      </div>
     </div>
 
-    <!-- Multiple time slots -->
-    <div class="fld">
-      <label>Reminder times</label>
-      <div id="time-slots" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-        <div class="time-slot-row" style="display:flex;align-items:center;gap:8px">
-          <input type="time" class="slot-time" style="flex:1"/>
-          <button onclick="removeTimeSlot(this)" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--red);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
+    <div id="expiry-wrap" class="form-field" style="display:none">
+      <label>Confirmation window (mins)</label>
+      <input id="mexpiry" type="number" min="5" max="120" value="30"
+             placeholder="How many minutes to confirm?"/>
+    </div>
+
+    <div class="form-field">
+      <label>Reminder Times</label>
+      <div id="time-slots">
+        <div class="time-slot-row">
+          <input type="time" class="slot-time"/>
+          <button class="time-remove-btn" onclick="removeTimeSlot(this)">×</button>
         </div>
       </div>
-      <button onclick="addTimeSlot()" class="btn bo sm" style="width:100%">+ Add another time</button>
+      <button class="add-slot-btn" onclick="addTimeSlot()">＋ Add another time</button>
     </div>
 
-    <!-- Photo expiry for critical -->
-    <div id="expiry-wrap" style="display:none" class="fld">
-      <label>Photo must be taken within</label>
-      <select id="mexpiry">
-        <option value="30">30 minutes of scheduled time</option>
-        <option value="60">1 hour of scheduled time</option>
-        <option value="120">2 hours of scheduled time</option>
-      </select>
-    </div>
-
-    <div style="display:flex;gap:9px;margin-top:4px">
-      <button class="btn bo" style="flex:1" onclick="cm('m-add')">Cancel</button>
-      <button class="btn bp" style="flex:1" onclick="saveMed()">Add medicine</button>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn-secondary" style="flex:1" onclick="cm('m-add')">Cancel</button>
+      <button class="btn-primary" style="flex:2" onclick="saveMed()">💾 Save Medicine</button>
     </div>
   </div>
 </div>
 
-<!-- TAKE DOSE MODAL -->
-<div class="mb" id="m-dose">
-  <div class="mo">
-    <div class="mo-handle"></div>
-    <div class="mt" id="dtitle">Take dose</div>
-    <div class="ms">Upload a photo of your medicine to confirm</div>
+<!-- Take Dose -->
+<div id="m-dose" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="dtitle">Take dose</div>
 
-    <!-- Gallery upload only -->
-    <label for="gallery-input" style="display:block">
-      <div id="upload-box" style="border:1.5px dashed var(--mint-mid);border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:var(--mint-bg)">
-        <div style="font-size:32px">🖼️</div>
-        <div style="font-size:14px;color:var(--mint);font-weight:600;margin-top:8px">Upload from gallery</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">Tap to choose a photo of your medicine</div>
-      </div>
-    </label>
-    <input type="file" id="gallery-input" accept="image/*" style="display:none" onchange="handleGallery(event)"/>
+    <!-- Upload / photo -->
+    <div id="upload-box" class="upload-box" onclick="document.getElementById('gallery-input').click()">
+      <span class="upload-icon">📸</span>
+      <p>Tap to upload a photo of your medicine</p>
+      <p style="font-size:11px;margin-top:4px;color:var(--text-muted)">AI will verify it's the correct medicine</p>
+    </div>
+    <input id="gallery-input" type="file" accept="image/*" capture="environment"
+           style="display:none" onchange="handleGallery(event)"/>
 
+    <!-- Preview -->
+    <div id="prevbox" style="display:none">
+      <img id="pimg" src="" alt="Medicine photo"/>
+    </div>
+
+    <!-- AI verification result -->
     <div id="aibox"></div>
-    <div id="prevbox" style="display:none;margin-top:9px">
-      <img id="pimg" style="width:100%;border-radius:13px;max-height:220px;object-fit:cover"/>
+
+    <!-- Notes -->
+    <div id="notes-wrap" class="form-field" style="display:none">
+      <label>Optional note</label>
+      <input id="dose-notes" type="text" placeholder="e.g. Taken with breakfast"/>
     </div>
-    <div id="notes-wrap" style="display:none;margin-top:10px">
-      <label style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">How do you feel? (optional)</label>
-      <input id="dose-notes" placeholder="e.g. Felt dizzy, took with food..."/>
+
+    <!-- Confirm button -->
+    <button id="cbtn" class="btn-primary full" style="display:none" onclick="confirmDose()">
+      ✓ Mark as taken
+    </button>
+
+    <button class="btn-secondary" style="width:100%;margin-top:10px" onclick="closeDose()">Cancel</button>
+  </div>
+</div>
+
+<!-- Weekly Report -->
+<div id="m-report" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📊 Weekly Report</div>
+    <div id="report-content"></div>
+    <button class="btn-secondary" style="width:100%;margin-top:12px" onclick="cm('m-report')">Close</button>
+  </div>
+</div>
+
+<!-- Refill Settings -->
+<div id="m-refill" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💊 Refill Tracker</div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px">
+      Track stock and get alerted when running low
+    </p>
+    <div id="refill-list"></div>
+    <button class="btn-secondary" style="width:100%;margin-top:16px" onclick="cm('m-refill')">Done</button>
+  </div>
+</div>
+
+<!-- Change Password -->
+<div id="m-pass" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔒 Change Password</div>
+    <div class="form-field">
+      <label>New password</label>
+      <input id="new-pass" type="password" placeholder="At least 6 characters"/>
     </div>
-    <div style="display:flex;gap:9px;margin-top:12px">
-      <button class="btn bo" style="flex:1" onclick="closeDose()">Cancel</button>
-      <button class="btn bp" style="flex:1;display:none" id="cbtn" onclick="confirmDose()">✓ Mark as taken</button>
+    <div class="form-field">
+      <label>Confirm password</label>
+      <input id="confirm-pass" type="password" placeholder="Repeat new password"
+             onkeydown="if(event.key==='Enter') doChangePass()"/>
+    </div>
+    <div id="pass-status"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn-secondary" style="flex:1" onclick="cm('m-pass')">Cancel</button>
+      <button class="btn-primary" style="flex:2" onclick="doChangePass()">Update Password</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="tst"></div>
+<!-- Onboarding -->
+<div id="m-onboard" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="onboard-slides"></div>
+    <div id="onboard-dots" style="display:flex;justify-content:center;gap:6px;margin:16px 0"></div>
+    <button id="onboard-next" class="btn-primary full" onclick="nextOnboardSlide()">Next →</button>
+    <button id="onboard-skip" class="btn-secondary" style="width:100%;margin-top:10px"
+            onclick="finishOnboard()">Skip</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="tst"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════════════════════ -->
+<!-- Firebase initializer (module) -->
+<script type="module" src="firebase.js"></script>
+<!-- App logic -->
+<script src="app.js"></script>
 
-<script>
-let FB = null;
-let currentUser = null;
-let userCode = '';
-let meds = [], doses = [], friends = [];
-let medsUnsub = null, dosesUnsub = null;
-let curMed = null, camStream = null, capData = null;
-let isSignUp = false;
-
-window.addEventListener('fbready', () => {
-  FB = window._fb;
-  // Show loading spinner while Firebase checks existing session
-  document.getElementById('auth-loading').style.display = 'flex';
-  document.getElementById('auth-box').style.display = 'none';
-
-  FB.onAuthStateChanged(FB.auth, user => {
-    document.getElementById('auth-loading').style.display = 'none';
-    if (user) {
-      currentUser = user;
-      saveAccountToDevice(user);
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('app-screen').style.display = 'block';
-      const uchip = document.getElementById('uchip');
-      if (uchip) uchip.textContent = user.displayName || user.email.split('@')[0];
-      loadUserProfile();
-      subscribeToMeds();
-      subscribeToDoses();
-      loadFriends();
-      scheduleReminders();
-      listenForNudges();
-      checkOnboarding();
-      setTimeout(checkRefillAlerts, 3000);
-      setTimeout(loadSavedMonitors, 1000);
-    } else {
-      currentUser = null;
-      document.getElementById('auth-box').style.display = 'block';
-      document.getElementById('auth-screen').style.display = 'flex';
-      document.getElementById('app-screen').style.display = 'none';
-      renderSavedAccounts();
-      if (medsUnsub) medsUnsub();
-      if (dosesUnsub) dosesUnsub();
-    }
-  });
-});
-
-// ── SAVED ACCOUNTS ─────────────────────────────────────────────────────────────
-function getSavedAccounts() {
-  try { return JSON.parse(localStorage.getItem('mm_accounts') || '[]'); } catch(e) { return []; }
-}
-function saveAccountToDevice(user) {
-  const accounts = getSavedAccounts();
-  const existing = accounts.findIndex(a => a.email === user.email);
-  const entry = { email: user.email, name: user.displayName || user.email.split('@')[0], uid: user.uid, lastUsed: Date.now() };
-  if (existing >= 0) accounts[existing] = entry; else accounts.push(entry);
-  localStorage.setItem('mm_accounts', JSON.stringify(accounts));
-}
-function removeAccountFromDevice(email) {
-  const accounts = getSavedAccounts().filter(a => a.email !== email);
-  localStorage.setItem('mm_accounts', JSON.stringify(accounts));
-  renderSavedAccounts();
-}
-function renderSavedAccounts() {
-  const accounts = getSavedAccounts();
-  const el = document.getElementById('saved-accounts');
-  const divider = document.getElementById('accounts-divider');
-  if (!accounts.length) { if(el) el.innerHTML=''; if(divider) divider.style.display='none'; return; }
-  if(divider) divider.style.display='block';
-  if(!el) return;
-  el.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Saved on this device</div>` +
-    accounts.sort((a,b)=>b.lastUsed-a.lastUsed).map(a => {
-      const ini = a.name.split(' ').map(w=>w[0]).join('').toUpperCase().substr(0,2);
-      return `<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;background:var(--white);transition:border .2s"
-        onmouseover="this.style.borderColor='var(--mint)'" onmouseout="this.style.borderColor='var(--border)'"
-        onclick="quickLogin('${a.email}')">
-        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--mint),#2e9068);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ini}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600">${a.name}</div>
-          <div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.email}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:11px;color:var(--mint);font-weight:600">Use →</span>
-          <span onclick="event.stopPropagation();removeAccountFromDevice('${a.email}')"
-            style="font-size:18px;color:var(--muted);cursor:pointer;line-height:1"
-            onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">×</span>
-        </div>
-      </div>`;
-    }).join('');
-}
-function quickLogin(email) {
-  document.getElementById('a-email').value = email;
-  document.getElementById('a-pass').value = '';
-  document.getElementById('a-pass').focus();
-  const err = document.getElementById('auth-err');
-  err.textContent = `Enter password for ${email}`;
-  err.style.cssText = 'display:block;background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-mid);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px';
-}
-
-// ── AUTH ───────────────────────────────────────────────────────────────────────
-function toggleAuth() {
-  isSignUp = !isSignUp;
-  document.getElementById('auth-subtitle').textContent = isSignUp ? 'Create a new account' : 'Sign in to your account';
-  document.getElementById('auth-btn').textContent = isSignUp ? 'Create account' : 'Sign in';
-  document.getElementById('auth-toggle').innerHTML = isSignUp
-    ? 'Already have an account? <span onclick="toggleAuth()">Sign in</span>'
-    : 'No account? <span onclick="toggleAuth()">Create one</span>';
-  document.getElementById('name-wrap').style.display = isSignUp ? 'block' : 'none';
-  document.getElementById('auth-err').style.display = 'none';
-}
-
-async function doAuth() {
-  if (!FB) { showAuthErr('Still loading — please wait.'); return; }
-  const email = document.getElementById('a-email').value.trim();
-  const pass  = document.getElementById('a-pass').value;
-  const name  = document.getElementById('a-name').value.trim();
-  if (!email || !pass) { showAuthErr('Please enter your email and password.'); return; }
-  const btn = document.getElementById('auth-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Signing in...';
-  try {
-    // If already logged in as someone else, sign out first
-    if (FB.auth.currentUser && FB.auth.currentUser.email !== email) {
-      await FB.signOut(FB.auth);
-    }
-    if (isSignUp) {
-      if (!name) { showAuthErr('Please enter your name.'); resetBtn(); return; }
-      const cred = await FB.createUserWithEmailAndPassword(FB.auth, email, pass);
-      await FB.updateProfile(cred.user, { displayName: name });
-      const code = genCode();
-      await FB.setDoc(FB.doc(FB.db,'users',cred.user.uid), {
-        name, email, code, uid: cred.user.uid, monitors: [],
-        createdAt: FB.serverTimestamp()
-      });
-    } else {
-      await FB.signInWithEmailAndPassword(FB.auth, email, pass);
-    }
-    // onAuthStateChanged handles the rest
-  } catch(e) {
-    showAuthErr(authErr(e.code));
-    resetBtn();
-  }
-  function resetBtn() {
-    btn.disabled = false;
-    btn.textContent = isSignUp ? t('createAcc') : t('signIn');
-  }
-}
-
-function showAuthErr(msg) {
-  const el = document.getElementById('auth-err');
-  el.textContent = msg;
-  el.style.cssText = 'display:block;background:#fdf0f0;color:var(--red);border:1px solid #f5c6c6;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px';
-}
-function authErr(code) {
-  return ({
-    'auth/email-already-in-use':'That email is already registered.',
-    'auth/invalid-email':'Please enter a valid email.',
-    'auth/weak-password':'Password must be at least 6 characters.',
-    'auth/wrong-password':'Incorrect password.',
-    'auth/user-not-found':'No account found for that email.',
-    'auth/invalid-credential':'Incorrect email or password.',
-    'auth/too-many-requests':'Too many attempts. Please wait a moment.',
-  })[code] || 'Something went wrong. Please try again.';
-}
-async function doSignOut() { await FB.signOut(FB.auth); }
-function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
-
-// ── USER PROFILE ───────────────────────────────────────────────────────────────
-async function loadUserProfile() {
-  const snap = await FB.getDoc(FB.doc(FB.db,'users',currentUser.uid));
-  if (snap.exists()) {
-    const data = snap.data();
-    userCode = data.code;
-    const el = document.getElementById('acode');
-    if (el) el.textContent = userCode;
-    const sl = document.getElementById('slink');
-    if (sl) sl.value = location.origin + location.pathname + '?monitor=' + userCode;
-    // Load profile photo if exists
-    if (data.photoURL) {
-      const avatar = document.getElementById('settings-avatar');
-      const homeAvatar = document.getElementById('home-avatar');
-      if (avatar) avatar.innerHTML = `<img src="${data.photoURL}" style="width:100%;height:100%;object-fit:cover"/>`;
-      if (homeAvatar) homeAvatar.innerHTML = `<img src="${data.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>`;
-    }
-  }
-  const hr = new Date().getHours();
-  const g = hr<12 ? 'Good morning' : hr<17 ? 'Good afternoon' : 'Good evening';
-  const n = currentUser.displayName || currentUser.email.split('@')[0];
-  const ini = n.split(' ').map(w=>w[0]).join('').toUpperCase().substr(0,2);
-  // Greeting
-  const greetEl = document.getElementById('greet');
-  if (greetEl) greetEl.textContent = `${g}, ${n} 👋`;
-  // Avatar initials
-  const avatarEl = document.getElementById('home-avatar');
-  if (avatarEl) avatarEl.textContent = ini;
-  // Today's date
-  const dateEl = document.getElementById('home-date');
-  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-MY',{weekday:'long',day:'numeric',month:'long'});
-  // Settings profile
-  const sname = document.getElementById('settings-name');
-  const semail = document.getElementById('settings-email');
-  const scode = document.getElementById('settings-code');
-  const savatar = document.getElementById('settings-avatar');
-  const sInput = document.getElementById('s-name');
-  if (sname) sname.textContent = n;
-  if (semail) semail.textContent = currentUser.email;
-  if (scode && userCode) scode.textContent = `Access code: ${userCode}`;
-  if (savatar) savatar.textContent = ini;
-  if (sInput) sInput.value = n;
-}
-
-// ── MEDICINES ─────────────────────────────────────────────────────────────────
-function subscribeToMeds() {
-  if (medsUnsub) medsUnsub();
-  const q = FB.query(FB.collection(FB.db,'medicines'), FB.where('uid','==',currentUser.uid));
-  medsUnsub = FB.onSnapshot(q, snap => {
-    meds = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    rHome();
-  });
-}
-
-// ── TIME SLOT HELPERS ──────────────────────────────────────────────────────────
-function addTimeSlot() {
-  const wrap = document.getElementById('time-slots');
-  const row = document.createElement('div');
-  row.className = 'time-slot-row';
-  row.style.cssText = 'display:flex;align-items:center;gap:8px';
-  row.innerHTML = `<input type="time" class="slot-time" style="flex:1"/>
-    <button onclick="removeTimeSlot(this)" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--red);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>`;
-  wrap.appendChild(row);
-}
-function removeTimeSlot(btn) {
-  const rows = document.querySelectorAll('.time-slot-row');
-  if (rows.length <= 1) { toast('At least one time is required'); return; }
-  btn.parentElement.remove();
-}
-function updatePriorityHint() {
-  const p = document.getElementById('mpriority').value;
-  const hints = {
-    critical: '🔴 <b>Critical:</b> Must be taken within 30 mins of scheduled time',
-    normal:   '🟡 <b>Normal:</b> Accepted within 1 hour before/after scheduled time',
-    flexible: '🟢 <b>Flexible:</b> Can be taken any time during the day'
-  };
-  document.getElementById('priority-hint').innerHTML = hints[p];
-  document.getElementById('expiry-wrap').style.display = p === 'critical' ? 'block' : 'none';
-}
-
-async function saveMed() {
-  const n = document.getElementById('mn').value.trim();
-  const d = document.getElementById('md').value.trim();
-  const i = document.getElementById('micon').value;
-  const p = document.getElementById('mpriority').value;
-  const expiry = p === 'critical' ? parseInt(document.getElementById('mexpiry').value) : null;
-  // Collect all time slots
-  const times = [...document.querySelectorAll('.slot-time')]
-    .map(el => el.value).filter(t => t);
-  if (!n) { toast('Please fill in medicine name'); return; }
-  if (!times.length) { toast('Please add at least one reminder time'); return; }
-  await FB.addDoc(FB.collection(FB.db,'medicines'), {
-    uid: currentUser.uid, name:n, dose:d, times, time:times[0], icon:i,
-    priority:p, expiryMins: expiry, createdAt: FB.serverTimestamp()
-  });
-  cm('m-add');
-  // Reset form
-  document.getElementById('mn').value = '';
-  document.getElementById('md').value = '';
-  document.getElementById('time-slots').innerHTML = `
-    <div class="time-slot-row" style="display:flex;align-items:center;gap:8px">
-      <input type="time" class="slot-time" style="flex:1"/>
-      <button onclick="removeTimeSlot(this)" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--red);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
-    </div>`;
-  toast('Medicine added!');
-}
-
-async function delMed(id) {
-  if (!confirm('Remove this medicine?')) return;
-  await FB.deleteDoc(FB.doc(FB.db,'medicines',id));
-  toast('Removed');
-}
-
-// ── DOSES ──────────────────────────────────────────────────────────────────────
-function subscribeToDoses() {
-  if (dosesUnsub) dosesUnsub();
-  // Try with orderBy first, fall back if index not ready
-  const q = FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',currentUser.uid), FB.orderBy('takenAt','desc'));
-  dosesUnsub = FB.onSnapshot(q, snap => {
-    doses = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    // Sort client-side as backup
-    doses.sort((a,b) => tsToDate(b.takenAt) - tsToDate(a.takenAt));
-    rHome();
-    rLog(); // Always refresh log whenever doses change
-  }, err => {
-    if (err.code === 'permission-denied') return; // expected before login, ignore silently
-    console.error('Doses query error:', err.message);
-    // Fallback: query without orderBy if index missing
-    const qFallback = FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',currentUser.uid));
-    dosesUnsub = FB.onSnapshot(qFallback, snap => {
-      doses = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-      doses.sort((a,b) => tsToDate(b.takenAt) - tsToDate(a.takenAt));
-      rHome();
-      rLog();
-    });
-  });
-}
-
-function tsToDate(ts) {
-  if (!ts) return new Date();
-  return ts.toDate ? ts.toDate() : new Date(ts);
-}
-
-// ── HOME ───────────────────────────────────────────────────────────────────────
-function getMedTimes(m) {
-  // Support both old (m.time) and new (m.times[]) format
-  if (m.times && m.times.length) return m.times;
-  if (m.time) return [m.time];
-  return [];
-}
-
-function rHome() {
-  const now = new Date(), tod = now.toDateString();
-  let missed = 0;
-
-  // Count missed — each time slot is a separate dose
-  meds.forEach(m => {
-    getMedTimes(m).forEach(t => {
-      const tk = doses.find(d => d.medId===m.id && d.scheduledTime===t && tsToDate(d.takenAt).toDateString()===tod);
-      if (!tk) {
-        const [h,mn] = t.split(':').map(Number), s = new Date(); s.setHours(h,mn,0,0);
-        if (s < now) missed++;
-      }
-    });
-  });
-
-  document.getElementById('alerts').innerHTML = missed > 0
-    ? `<div class="ab">⚠️ You have ${missed} missed dose${missed>1?'s':''} today — your monitors can see this.</div>` : '';
-
-  const el = document.getElementById('med-home');
-  if (!meds.length) { el.innerHTML='<div class="es"><div class="ei">💊</div>No medicines yet.<br>Tap below to add one!</div>'; return; }
-
-  // Each time slot gets its own row
-  let html = '';
-  meds.forEach(m => {
-    const times = getMedTimes(m);
-    const priority = m.priority || 'normal';
-    const pLabel = {critical:'🔴',normal:'🟡',flexible:'🟢'}[priority];
-
-    times.forEach(t => {
-      const tk = doses.find(d => d.medId===m.id && d.scheduledTime===t && tsToDate(d.takenAt).toDateString()===tod);
-      const st = tk ? 'taken' : doseStatus(m, t);
-      const bm = {taken:'bg',due:'bw',upcoming:'bx',missed:'br'};
-      const lm = {taken:'✓ Taken',due:'Due now',upcoming:'Upcoming',missed:'Missed'};
-
-      // Check photo expiry for critical meds
-      let expiryWarning = '';
-      if (!tk && priority === 'critical' && m.expiryMins) {
-        const [h,mn] = t.split(':').map(Number), s = new Date(); s.setHours(h,mn,0,0);
-        const diffMins = (now - s) / 60000;
-        if (diffMins > 0 && diffMins <= m.expiryMins) {
-          const remaining = Math.round(m.expiryMins - diffMins);
-          expiryWarning = `<div style="font-size:10px;color:var(--red);margin-top:2px">⏱ ${remaining} mins left to confirm</div>`;
-        } else if (diffMins > m.expiryMins) {
-          expiryWarning = `<div style="font-size:10px;color:var(--muted);margin-top:2px">⏱ Confirmation window expired</div>`;
-        }
-      }
-
-      html += `<div class="mi">
-        <div class="mico">${m.icon}</div>
-        <div style="flex:1">
-          <div class="mnm">${m.name} ${pLabel}</div>
-          <div class="msb">${m.dose||''} · ${t}${times.length > 1 ? ` <span style="opacity:.6">(${times.indexOf(t)+1}/${times.length})</span>` : ''}</div>
-          ${expiryWarning}
-        </div>
-        <div class="mac">
-          <span class="badge ${bm[st]}">${lm[st]}</span>
-          ${!tk ? `<button class="btn bo sm" onclick="openDose('${m.id}','${t}')">Take dose</button>` : ''}
-          ${times.length === 1 ? `<button class="btn bd sm" onclick="delMed('${m.id}')">Remove</button>` : ''}
-        </div>
-      </div>`;
-    });
-
-    // Show remove button once per medicine if multiple times
-    if (times.length > 1) {
-      html += `<div style="text-align:right;margin-top:-6px;margin-bottom:10px">
-        <button class="btn bd sm" onclick="delMed('${m.id}')">Remove ${m.name}</button>
-      </div>`;
-    }
-  });
-  el.innerHTML = html;
-}
-
-function doseStatus(m, time) {
-  const t = time || getMedTimes(m)[0] || '00:00';
-  const now = new Date(), [h,mn] = t.split(':').map(Number), s = new Date();
-  s.setHours(h,mn,0,0);
-  const win = m.priority === 'critical' ? 30 : m.priority === 'flexible' ? 999 : 60;
-  const d = (s - now) / 60000;
-  return d < -win ? 'missed' : d <= win ? 'due' : 'upcoming';
-}
-
-async function confirmDose() {
-  const btn = document.getElementById('cbtn');
-  btn.disabled = true;
-  btn.textContent = 'Saving...';
-  try {
-    const m = meds.find(x => x.id===curMed);
-    const now = new Date();
-    const schedTime = curScheduledTime || getMedTimes(m)[0] || '';
-    const notes = document.getElementById('dose-notes')?.value?.trim() || '';
-
-    // Check photo expiry for critical meds
-    if (m?.priority === 'critical' && m?.expiryMins && schedTime) {
-      const [h,mn] = schedTime.split(':').map(Number);
-      const sched = new Date(); sched.setHours(h,mn,0,0);
-      const diffMins = (now - sched) / 60000;
-      if (diffMins > m.expiryMins) {
-        document.getElementById('aibox').innerHTML = `<div class="ais no">⏱ Confirmation window expired — this dose cannot be recorded as it was more than ${m.expiryMins} mins past scheduled time.</div>`;
-        btn.disabled = false;
-        btn.textContent = '✓ Mark as taken';
-        return;
-      }
-    }
-
-    // Calculate timing status
-    let timingStatus = 'on-time';
-    if (schedTime) {
-      const [h,mn] = schedTime.split(':').map(Number);
-      const sched = new Date(); sched.setHours(h,mn,0,0);
-      const diffMins = (now - sched) / 60000;
-      const win = m?.priority === 'critical' ? 30 : m?.priority === 'flexible' ? 999 : 60;
-      if (diffMins < -win) timingStatus = 'early';
-      else if (diffMins > win) timingStatus = 'late';
-      else timingStatus = 'on-time';
-    }
-
-    await FB.addDoc(FB.collection(FB.db,'doses'), {
-      uid: currentUser.uid,
-      medId: curMed,
-      medName: m ? m.name : '',
-      medIcon: m ? m.icon : '💊',
-      medTime: m ? (m.times?.[0] || m.time || '') : '',
-      scheduledTime: schedTime,
-      medPriority: m ? (m.priority || 'normal') : 'normal',
-      photo: capData,
-      notes: notes || null,
-      detectedName: window._lastDetected?.detected || null,
-      detectedDosage: window._lastDetected?.dosage || null,
-      detectedMatch: window._lastDetected?.match ?? null,
-      timingStatus,
-      takenAt: FB.serverTimestamp()
-    });
-    closeDose();
-    toast('✅ Dose marked as taken!');
-  } catch(e) {
-    console.error('confirmDose error:', e);
-    document.getElementById('aibox').innerHTML = `<div class="ais no">⚠️ Failed to save: ${e.message}</div>`;
-    btn.disabled = false;
-    btn.textContent = '✓ Mark as taken';
-  }
-}
-
-// ── LOG ────────────────────────────────────────────────────────────────────────
-function rLog() {
-  const el = document.getElementById('log-list');
-
-  // Build historical missed doses for last 7 days
-  const missedEntries = [];
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const ds = d.toDateString();
-    meds.forEach(m => {
-      getMedTimes(m).forEach(t => {
-        const taken = doses.find(dose =>
-          dose.medId === m.id &&
-          (dose.scheduledTime === t || (!dose.scheduledTime && t === getMedTimes(m)[0])) &&
-          tsToDate(dose.takenAt).toDateString() === ds
-        );
-        if (!taken) missedEntries.push({ date: d, medName: m.name, medIcon: m.icon, scheduledTime: t });
-      });
-    });
-  }
-
-  if (!doses.length && !missedEntries.length) {
-    el.innerHTML = '<div class="es"><div class="ei">📋</div>No doses recorded yet.<br>Take your first dose to see history here!</div>';
-    return;
-  }
-
-  // Group taken doses by date
-  const groups = {};
-  doses.forEach(d => {
-    const t = tsToDate(d.takenAt);
-    const dateKey = t.toLocaleDateString('en-MY', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
-    if (!groups[dateKey]) groups[dateKey] = { taken:[], missed:[] };
-    groups[dateKey].taken.push(d);
-  });
-
-  // Add missed to groups
-  missedEntries.forEach(me => {
-    const dateKey = me.date.toLocaleDateString('en-MY', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
-    if (!groups[dateKey]) groups[dateKey] = { taken:[], missed:[] };
-    groups[dateKey].missed.push(me);
-  });
-
-  // Sort groups by date descending
-  const sortedGroups = Object.entries(groups).sort((a,b) => {
-    const dateA = new Date(a[1].taken[0] ? tsToDate(a[1].taken[0].takenAt) : a[1].missed[0]?.date);
-    const dateB = new Date(b[1].taken[0] ? tsToDate(b[1].taken[0].takenAt) : b[1].missed[0]?.date);
-    return dateB - dateA;
-  });
-
-  let html = '';
-  sortedGroups.forEach(([date, {taken, missed}]) => {
-    html += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px">${date}</div>`;
-
-    // Taken doses
-    taken.forEach(d => {
-      const m = meds.find(x => x.id === d.medId);
-      const t = tsToDate(d.takenAt);
-      const timeStr = t.toLocaleTimeString('en-MY', {hour:'2-digit', minute:'2-digit'});
-      const priority = d.medPriority || m?.priority || 'normal';
-      const pLabel = {critical:'🔴',normal:'🟡',flexible:'🟢'}[priority];
-      const ts = d.timingStatus || 'on-time';
-      const tsMap = {early:{label:'⚡ Early',color:'var(--blue)'},'on-time':{label:'✅ On time',color:'var(--blue)'},late:{label:'⏰ Late',color:'var(--warn)'}};
-      const tsInfo = tsMap[ts] || tsMap['on-time'];
-
-      // AI detection info
-      let aiHtml = '';
-      if (d.detectedName) {
-        const matchIcon = d.detectedMatch === true ? '✅' : d.detectedMatch === false ? '⚠️' : '❓';
-        aiHtml = `<div style="font-size:11px;color:var(--muted);margin-top:2px">${matchIcon} Detected: ${d.detectedName}${d.detectedDosage ? ' · ' + d.detectedDosage : ''}</div>`;
-      }
-      // Notes
-      const notesHtml = d.notes ? `<div style="font-size:11px;color:var(--blue);margin-top:3px;font-style:italic">💬 "${d.notes}"</div>` : '';
-
-      html += `<div style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--white);border:1px solid var(--border);border-radius:14px;margin-bottom:8px">
-        ${d.photo
-          ? `<img src="${d.photo}" style="width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0"/>`
-          : `<div style="width:52px;height:52px;border-radius:10px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${d.medIcon || m?.icon || '💊'}</div>`
-        }
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:14px">${d.medName || m?.name || 'Unknown'} ${pLabel}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">
-            Taken ${timeStr} · Scheduled ${d.scheduledTime || d.medTime || '--:--'}
-          </div>
-          ${aiHtml}${notesHtml}
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:12px;font-weight:600;color:${tsInfo.color}">${tsInfo.label}</div>
-          <div class="badge bg" style="margin-top:4px;display:block">✓ Done</div>
-        </div>
-      </div>`;
-    });
-
-    // Missed doses
-    missed.forEach(me => {
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:14px;margin-bottom:8px">
-        <div style="width:52px;height:52px;border-radius:10px;background:#fde8e8;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${me.medIcon}</div>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:14px;color:var(--red)">${me.medName}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Scheduled ${me.scheduledTime} — not taken</div>
-        </div>
-        <span class="badge br">❌ Missed</span>
-      </div>`;
-    });
-  });
-
-  el.innerHTML = html || '<div class="es"><div class="ei">📋</div>No history yet</div>';
-}
-
-
-// ── FAMILY ─────────────────────────────────────────────────────────────────────
-async function loadFriends() {
-  const snap = await FB.getDoc(FB.doc(FB.db,'users',currentUser.uid));
-  friends = snap.exists() ? (snap.data().monitors || []) : [];
-  rFamily();
-}
-
-function rFamily() {
-  const el = document.getElementById('flist');
-  if (!friends.length) { el.innerHTML='<div class="es"><div class="ei">👥</div>No monitors added yet</div>'; return; }
-  el.innerHTML = friends.map(f => {
-    const ini = (f.name||f.email).split(' ').map(w=>w[0]).join('').toUpperCase().substr(0,2);
-    return `<div class="fi">
-      <div class="fav">${ini}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600">${f.name||f.email}</div>
-        <div style="font-size:11px;color:var(--muted)">${f.email}</div>
-      </div>
-      <button class="btn bd sm" onclick="removeMonitor('${f.email}')">Remove</button>
-    </div>`;
-  }).join('');
-}
-
-async function doInvite() {
-  const email = document.getElementById('inv-email').value.trim();
-  if (!email || !email.includes('@')) { toast('Enter a valid email'); return; }
-  if (friends.find(f => f.email===email)) { toast('Already a monitor'); return; }
-  friends.push({ email, name: email.split('@')[0] });
-  await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { monitors: friends });
-  document.getElementById('inv-email').value = '';
-  rFamily();
-  toast(`✅ ${email} added as monitor`);
-}
-
-async function removeMonitor(email) {
-  friends = friends.filter(f => f.email !== email);
-  await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { monitors: friends });
-  rFamily();
-  toast('Monitor removed');
-}
-
-// ── MONITOR DASHBOARD (live, multiple people) ──────────────────────────────────
-let monitoredPeople = {}; // { code: { user, unsubMeds, unsubDoses } }
-
-// ── Save/load monitored list to Firestore ──────────────────────────────────────
-async function loadSavedMonitors() {
-  try {
-    const snap = await FB.getDoc(FB.doc(FB.db,'users',currentUser.uid));
-    const saved = snap.data()?.monitoring || [];
-    for (const code of saved) {
-      if (!monitoredPeople[code]) await subscribeMonitor(code, true);
-    }
-    if (!saved.length) renderMonitoredList();
-  } catch(e) { renderMonitoredList(); }
-}
-
-async function saveMonitorList() {
-  try {
-    const codes = Object.keys(monitoredPeople);
-    await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { monitoring: codes });
-  } catch(e) {}
-}
-
-async function doMonitor() {
-  const code = document.getElementById('mcode').value.trim().toUpperCase();
-  if (code.length < 4) { toast('Enter a valid access code'); return; }
-  if (code === userCode) { toast('⚠️ You cannot monitor yourself!'); document.getElementById('mcode').value = ''; return; }
-  if (monitoredPeople[code]) { toast('Already monitoring this person'); document.getElementById('mcode').value = ''; return; }
-  document.getElementById('mcode').value = '';
-  await subscribeMonitor(code, false);
-}
-
-async function subscribeMonitor(code, silent) {
-  let targetUser = null;
-  await new Promise(res => {
-    const q = FB.query(FB.collection(FB.db,'users'), FB.where('code','==',code));
-    const u = FB.onSnapshot(q, snap => { if (!snap.empty) targetUser = snap.docs[0].data(); u(); res(); });
-  });
-  if (!targetUser) { if (!silent) toast(`No user found for code ${code}`); return; }
-  if (!silent) toast(`✅ Now monitoring ${targetUser.name}`);
-
-  const uid = targetUser.uid;
-  let tMeds = [], tDoses = [];
-  const cardId = `monitor-${code}`;
-  const listEl = document.getElementById('monitored-list');
-
-  // Remove empty state
-  const emptyEl = listEl.querySelector('.es');
-  if (emptyEl) emptyEl.remove();
-
-  const card = document.createElement('div');
-  card.id = cardId;
-  card.style.cssText = 'margin-bottom:16px;animation:fadeSlideIn .3s ease';
-  card.innerHTML = `<div class="card" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span> Loading ${targetUser.name}...</div>`;
-  listEl.appendChild(card);
-
-  function redraw() { renderDash(targetUser, tMeds, tDoses, card, code); }
-
-  const unsubMeds = FB.onSnapshot(
-    FB.query(FB.collection(FB.db,'medicines'), FB.where('uid','==',uid)),
-    snap => { tMeds = snap.docs.map(d=>({id:d.id,...d.data()})); redraw(); },
-    err => { if (err.code !== 'permission-denied') console.error(err); }
-  );
-
-  const dosesQ = FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',uid), FB.orderBy('takenAt','desc'));
-  const unsubDoses = FB.onSnapshot(dosesQ, snap => {
-    tDoses = snap.docs.map(d=>({id:d.id,...d.data()}));
-    tDoses.sort((a,b) => tsToDate(b.takenAt) - tsToDate(a.takenAt));
-    redraw();
-  }, err => {
-    if (err.code === 'permission-denied') return;
-    FB.onSnapshot(FB.query(FB.collection(FB.db,'doses'), FB.where('uid','==',uid)), snap => {
-      tDoses = snap.docs.map(d=>({id:d.id,...d.data()}));
-      tDoses.sort((a,b) => tsToDate(b.takenAt) - tsToDate(a.takenAt));
-      redraw();
-    });
-  });
-
-  monitoredPeople[code] = { user: targetUser, unsubMeds, unsubDoses };
-  saveMonitorList();
-}
-
-function removeMonitored(code) {
-  const p = monitoredPeople[code];
-  if (p) { try { p.unsubMeds(); p.unsubDoses(); } catch(e) {} delete monitoredPeople[code]; }
-  const card = document.getElementById(`monitor-${code}`);
-  if (card) { card.style.animation = 'fadeOut .2s ease'; setTimeout(() => card.remove(), 200); }
-  saveMonitorList();
-  toast('Removed from monitoring');
-  if (!Object.keys(monitoredPeople).length) renderMonitoredList();
-}
-
-function renderMonitoredList() {
-  if (!Object.keys(monitoredPeople).length) {
-    document.getElementById('monitored-list').innerHTML =
-      '<div class="es"><div class="ei">👥</div>No one being monitored yet.<br>Enter a code above to start.</div>';
-  }
-}
-
-function renderDash(user, tMeds, tDoses, el, code) {
-  const tod = new Date().toDateString();
-  const taken = tMeds.filter(m => tDoses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod)).length;
-  const total = tMeds.length, missed = total - taken, streak = calcStreak(tDoses);
-  const recent = tDoses.slice(0,5);
-  const targetUid = user.uid;
-
-  el.innerHTML = `
-    <div class="mhdr">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:13px;opacity:.8;margin-bottom:4px"><span class="live-dot"></span>Live updates</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff">${user.name}'s Progress</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-          <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,.3)">
-            ${user.name?.[0]?.toUpperCase() || '👤'}
-          </div>
-          <button onclick="removeMonitored('${code}')" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;cursor:pointer;white-space:nowrap">✕ Remove</button>
-        </div>
-      </div>
-      <div class="sg">
-        <div class="sb"><div class="sn">${taken}/${total}</div><div class="sl">Taken today</div></div>
-        <div class="sb"><div class="sn" style="color:${missed>0?'#ffaa5a':'#fff'}">${missed}</div><div class="sl">Missed</div></div>
-        <div class="sb"><div class="sn">${streak}</div><div class="sl">🔥 Streak</div></div>
-      </div>
-    </div>
-
-    ${missed > 0
-      ? `<div class="ab">⚠️ ${user.name} has ${missed} missed dose${missed>1?'s':''} today!</div>`
-      : total > 0
-        ? `<div style="background:var(--mint-bg);border-radius:12px;padding:12px;text-align:center;font-size:13px;color:var(--mint);font-weight:600;margin-bottom:14px">✅ All doses taken today — great job!</div>`
-        : ''}
-
-    <!-- NUDGE SECTION -->
-    <div class="nudge-box">
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">💬 Send a nudge</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Send a friendly reminder to ${user.name} to take their medicine</div>
-      <div style="display:flex;gap-8px;flex-direction:column;gap:8px">
-        <select id="nudge-msg" style="font-size:13px">
-          <option value="Hey! Don't forget to take your medicine 💊">Hey! Don't forget to take your medicine 💊</option>
-          <option value="Time to take your meds! Stay healthy 🌿">Time to take your meds! Stay healthy 🌿</option>
-          <option value="Quick reminder — medicine time! ⏰">Quick reminder — medicine time! ⏰</option>
-          <option value="We care about you! Please take your medicine 💙">We care about you! Please take your medicine 💙</option>
-        </select>
-        <button class="btn bnudge" style="margin-top:8px" onclick="sendNudge('${targetUid}','${user.name}')">
-          Send nudge 👋
-        </button>
-      </div>
-      <div id="nudge-history-${targetUid}" class="nudge-history"></div>
-    </div>
-
-    <div class="card" style="margin-top:14px">
-      <div class="ct">This week</div>
-      <div class="sd">${buildDots(tDoses)}</div>
-    </div>
-
-    <div class="card">
-      <div class="ct">Medicines</div>
-      ${tMeds.length ? tMeds.map(m => {
-        const tk = tDoses.find(d => d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
-        const priority = m.priority || 'normal';
-        const pLabel = {critical:'🔴',normal:'🟡',flexible:'🟢'}[priority];
-        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:20px">${m.icon}</span>
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:600">${m.name} ${pLabel}</div>
-            <div style="font-size:11px;color:var(--muted)">${m.dose||''} · ${m.time}</div>
-          </div>
-          <span class="badge ${tk?'bg':'br'}">${tk?'✓ Taken':'Not yet'}</span>
-        </div>`;
-      }).join('') : '<div style="font-size:13px;color:var(--muted)">No medicines set up</div>'}
-    </div>
-
-    <div class="card">
-      <div class="ct">Recent doses</div>
-      ${recent.length ? recent.map(d => {
-        const m = tMeds.find(x => x.id===d.medId);
-        const t = tsToDate(d.takenAt);
-        const ts = d.timingStatus || 'on-time';
-        const tsLabel = {early:'⚡ Early','on-time':'✅ On time',late:'⏰ Late'}[ts];
-        return `<div class="dr">
-          <div class="dth">${d.photo?`<img src="${d.photo}"/>`:(m?m.icon:'💊')}</div>
-          <div style="flex:1">
-            <div class="dnm">${m?m.name:d.medName}</div>
-            <div class="dtm">${t.toLocaleDateString('en-MY',{month:'short',day:'numeric'})} · ${t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})}</div>
-          </div>
-          <span class="badge bg">${tsLabel}</span>
-        </div>`;
-      }).join('') : '<div class="es" style="padding:14px 0">No doses recorded yet</div>'}
-    </div>`;
-
-  // Load nudge history
-  loadNudgeHistory(targetUid);
-}
-
-function calcStreak(doseList) {
-  let s = 0;
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    if (doseList.some(x => tsToDate(x.takenAt).toDateString()===d.toDateString())) s++;
-    else if (i > 0) break;
-  }
-  return s;
-}
-
-function buildDots(doseList) {
-  return Array.from({length:7}, (_,i) => {
-    const d = new Date(); d.setDate(d.getDate()-(6-i));
-    const tk = doseList.some(x => tsToDate(x.takenAt).toDateString()===d.toDateString());
-    return `<div class="dot ${tk?'tk':i<6?'mk':'ft'}">${['S','M','T','W','T','F','S'][d.getDay()]}</div>`;
-  }).join('');
-}
-
-// ── CAMERA / AI ────────────────────────────────────────────────────────────────
-let curScheduledTime = '';
-
-function openDose(id, scheduledTime) {
-  curMed = id;
-  curScheduledTime = scheduledTime || '';
-  capData = null;
-  window._lastDetected = null;
-  const m = meds.find(x => x.id===id);
-  document.getElementById('dtitle').textContent = m ? `${m.name}${scheduledTime ? ' · ' + scheduledTime : ''}` : 'Take dose';
-  document.getElementById('aibox').innerHTML = '';
-  document.getElementById('prevbox').style.display = 'none';
-  document.getElementById('cbtn').style.display = 'none';
-  document.getElementById('notes-wrap').style.display = 'none';
-  document.getElementById('dose-notes').value = '';
-  document.getElementById('gallery-input').value = '';
-  document.getElementById('upload-box').style.display = 'block';
-  document.getElementById('m-dose').classList.add('op');
-}
-
-function stopCam() { if (camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; } }
-
-// Handle gallery/file upload
-function handleGallery(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  document.getElementById('aibox').innerHTML = '<div class="ais chk">⏳ Processing image...</div>';
-  document.getElementById('upload-box').style.display = 'none';
-
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const maxW = 800;
-      const scale = Math.min(1, maxW / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      capData = canvas.toDataURL('image/jpeg', 0.6);
-      processPhoto(capData);
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-function processPhoto(dataUrl) {
-  document.getElementById('pimg').src = dataUrl;
-  document.getElementById('prevbox').style.display = 'block';
-  document.getElementById('aibox').innerHTML = '<div class="ais chk">🔍 AI is verifying your photo...</div>';
-  document.getElementById('cbtn').style.display = 'none';
-  verifyAI(dataUrl);
-}
-
-async function verifyAI(url) {
-  const b64 = url.split(',')[1];
-  const WORKER_URL = 'https://long-sky-df3a.svhisshal.workers.dev';
-  try {
-    const r = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ imageBase64: b64, medName: meds.find(m => m.id === curMed)?.name || '' })
-    });
-
-    if (!r.ok) {
-      const errText = await r.text();
-      document.getElementById('aibox').innerHTML = `<div class="ais no">⚠️ Worker error ${r.status}: ${errText}</div>`;
-      showRetake();
-      return;
-    }
-
-    const data = await r.json();
-    const txt = data.result || '';
-    console.log('AI response:', txt);
-
-    let res = { pass:false, reason:'Could not parse response' };
-    try {
-      res = JSON.parse(txt.replace(/```json|```/g,'').trim());
-    } catch(e) {
-      if (txt.toLowerCase().includes('"pass":true') || txt.toLowerCase().includes('pass": true')) {
-        res = { pass:true, reason:'Medicine detected' };
-      }
-    }
-
-    if (res.pass) {
-      // Build detailed result display
-      let detailHtml = '';
-      if (res.detected) {
-        const matchIcon = res.match === true ? '✅' : res.match === false ? '⚠️' : '❓';
-        const matchText = res.match === true ? 'Matches your medicine' : res.match === false ? 'Different from expected' : 'Could not verify name';
-        const matchColor = res.match === false ? 'var(--warn)' : 'inherit';
-        detailHtml = `
-          <div style="margin-top:8px;padding:10px;background:rgba(255,255,255,.1);border-radius:8px;font-size:12px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="opacity:.75">Detected</span>
-              <span style="font-weight:600">${res.detected}${res.dosage ? ' · ' + res.dosage : ''}${res.form ? ' · ' + res.form : ''}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between">
-              <span style="opacity:.75">Match</span>
-              <span style="font-weight:600;color:${matchColor}">${matchIcon} ${matchText}</span>
-            </div>
-          </div>`;
-      } else {
-        detailHtml = `<div style="margin-top:6px;font-size:11px;opacity:.75">Label not readable — medicine confirmed by appearance</div>`;
-      }
-
-      document.getElementById('aibox').innerHTML = `
-        <div class="ais ok">
-          <div style="font-weight:700;margin-bottom:2px">✅ Medicine verified!</div>
-          <div style="font-size:12px">${res.reason}</div>
-          ${detailHtml}
-        </div>`;
-
-      window._lastDetected = res;
-      const btn = document.getElementById('cbtn');
-      btn.style.display = 'flex';
-      btn.textContent = '✓ Mark as taken';
-      btn.disabled = false;
-      btn.onclick = confirmDose;
-      // Show notes field
-      document.getElementById('notes-wrap').style.display = 'block';
-    } else {
-      document.getElementById('aibox').innerHTML = `<div class="ais no">❌ ${res.reason}</div>`;
-      showRetake();
-    }
-  } catch(e) {
-    console.error('verifyAI error:', e);
-    document.getElementById('aibox').innerHTML = `<div class="ais no">⚠️ Could not reach AI: ${e.message}</div>`;
-    showRetake();
-  }
-}
-
-function showRetake() {
-  document.getElementById('upload-box').style.display = 'block';
-  document.getElementById('gallery-input').value = '';
-  capData = null;
-}
-
-function closeDose() {
-  stopCam();
-  capData = null;
-  curScheduledTime = '';
-  window._lastDetected = null;
-  document.getElementById('m-dose').classList.remove('op');
-  document.getElementById('upload-box').style.display = 'block';
-  document.getElementById('cbtn').style.display = 'none';
-  document.getElementById('aibox').innerHTML = '';
-  document.getElementById('prevbox').style.display = 'none';
-  document.getElementById('notes-wrap').style.display = 'none';
-  document.getElementById('dose-notes').value = '';
-  document.getElementById('gallery-input').value = '';
-}
-
-// ── HELPERS ────────────────────────────────────────────────────────────────────
-function go(id, el) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
-  document.getElementById('pg-'+id).classList.add('on'); el.classList.add('on');
-  if (id==='log') rLog();
-  if (id==='family') rFamily();
-}
-function openAdd() { document.getElementById('m-add').classList.add('op'); }
-function cm(id) { document.getElementById(id).classList.remove('op'); }
-function cpCode() { navigator.clipboard.writeText(userCode).then(()=>toast('Code copied!')).catch(()=>{}); }
-function cpLink() { navigator.clipboard.writeText(document.getElementById('slink').value).then(()=>toast('Link copied!')).catch(()=>{}); }
-function toast(msg) {
-  const e=document.getElementById('tst');
-  e.textContent=msg; e.classList.add('show');
-  setTimeout(()=>e.classList.remove('show'),2600);
-}
-
-// ── DARK MODE ─────────────────────────────────────────────────────────────────
-function toggleDark() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const newTheme = isDark ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', newTheme);
-  document.getElementById('dark-btn').textContent = isDark ? '🌙' : '☀️';
-  document.getElementById('dark-mode-label').textContent = isDark ? 'Currently off' : 'Currently on';
-  const knob = document.getElementById('dark-knob');
-  const toggle = document.getElementById('dark-toggle');
-  if (knob && toggle) {
-    knob.style.left = isDark ? '2px' : '22px';
-    toggle.style.background = isDark ? 'var(--border)' : 'var(--blue)';
-  }
-  localStorage.setItem('medmate_theme', newTheme);
-}
-// Load saved theme on startup
-const savedTheme = localStorage.getItem('medmate_theme') || 'light';
-if (savedTheme === 'dark') {
-  document.documentElement.setAttribute('data-theme', 'dark');
-  setTimeout(() => {
-    const btn = document.getElementById('dark-btn');
-    const lbl = document.getElementById('dark-mode-label');
-    const knob = document.getElementById('dark-knob');
-    const toggle = document.getElementById('dark-toggle');
-    if (btn) btn.textContent = '☀️';
-    if (lbl) lbl.textContent = 'Currently on';
-    if (knob) knob.style.left = '22px';
-    if (toggle) toggle.style.background = 'var(--blue)';
-  }, 100);
-}
-
-// ── NUDGE ─────────────────────────────────────────────────────────────────────
-async function sendNudge(targetUid, targetName) {
-  const msg = document.getElementById('nudge-msg').value;
-  const senderName = currentUser.displayName || currentUser.email.split('@')[0];
-  try {
-    await FB.addDoc(FB.collection(FB.db,'nudges'), {
-      toUid: targetUid,
-      fromUid: currentUser.uid,
-      fromName: senderName,
-      message: msg,
-      sentAt: FB.serverTimestamp(),
-      read: false
-    });
-    toast(`👋 Nudge sent to ${targetName}!`);
-    loadNudgeHistory(targetUid);
-  } catch(e) {
-    toast('Failed to send nudge');
-    console.error(e);
-  }
-}
-
-async function loadNudgeHistory(targetUid) {
-  const el = document.getElementById(`nudge-history-${targetUid}`);
-  if (!el) return;
-  try {
-    const q = FB.query(FB.collection(FB.db,'nudges'), FB.where('toUid','==',targetUid));
-    FB.onSnapshot(q, snap => {
-      if (!snap.docs.length) { el.innerHTML = ''; return; }
-      const nudges = snap.docs.map(d=>({...d.data()}))
-        .sort((a,b) => tsToDate(b.sentAt) - tsToDate(a.sentAt))
-        .slice(0,5);
-      el.innerHTML = `<div class="section-label" style="margin-top:10px">Recent nudges</div>` +
-        nudges.map(n => {
-          const t = tsToDate(n.sentAt);
-          const timeStr = t.toLocaleDateString('en-MY',{month:'short',day:'numeric'}) + ' ' +
-                          t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'});
-          return `<div class="nudge-item">
-            <span>${n.fromName}: "${n.message}"</span>
-            <span style="flex-shrink:0;margin-left:8px">${timeStr}</span>
-          </div>`;
-        }).join('');
-    });
-  } catch(e) { console.error('loadNudgeHistory:', e); }
-}
-
-// ── NUDGE NOTIFICATIONS for the patient ────────────────────────────────────────
-function listenForNudges() {
-  if (!currentUser) return;
-  const q = FB.query(
-    FB.collection(FB.db,'nudges'),
-    FB.where('toUid','==',currentUser.uid),
-    FB.where('read','==',false)
-  );
-  FB.onSnapshot(q, snap => {
-    snap.docChanges().forEach(async change => {
-      if (change.type === 'added') {
-        const n = change.doc.data();
-        // Show in-app toast
-        toast(`💬 ${n.fromName}: ${n.message}`);
-        // Browser notification
-        if (Notification.permission === 'granted') {
-          new Notification(`💊 MedMate — Nudge from ${n.fromName}`, { body: n.message });
-        }
-        // Mark as read
-        try {
-          await FB.updateDoc(FB.doc(FB.db,'nudges',change.doc.id), { read: true });
-        } catch(e) {}
-      }
-    });
-  });
-}
-
-// ── NOTIFICATIONS ──────────────────────────────────────────────────────────────
-function scheduleReminders() {
-  if ('Notification' in window && Notification.permission==='default') Notification.requestPermission();
-  setInterval(() => {
-    if (!meds.length || Notification.permission!=='granted') return;
-    const now=new Date(), tod=now.toDateString();
-    meds.forEach(m => {
-      const [h,mn]=m.time.split(':').map(Number), s=new Date(); s.setHours(h,mn,0,0);
-      const diff=Math.abs(now-s)/60000;
-      const taken=doses.find(d=>d.medId===m.id && tsToDate(d.takenAt).toDateString()===tod);
-      if (diff<2 && !taken) {
-        new Notification('MedMate 💊',{body:`Time to take ${m.name}${m.dose?' – '+m.dose:''}`});
-      }
-    });
-  }, 30000);
-}
-
-// ── SETTINGS FUNCTIONS ────────────────────────────────────────────────────────
-async function updateName() {
-  const n = document.getElementById('s-name').value.trim();
-  if (!n) { toast('Please enter a name'); return; }
-  try {
-    await FB.updateProfile(currentUser, { displayName: n });
-    await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { name: n });
-    loadUserProfile();
-    toast('✅ Name updated!');
-  } catch(e) { toast('Failed to update name'); }
-}
-
-function requestNotifPermission() {
-  if (!('Notification' in window)) { toast('Notifications not supported'); return; }
-  Notification.requestPermission().then(p => {
-    const badge = document.getElementById('notif-badge');
-    const label = document.getElementById('notif-label');
-    if (p === 'granted') {
-      toast('✅ Notifications enabled!');
-      if (badge) { badge.textContent = 'On'; badge.className = 'badge bg'; }
-      if (label) label.textContent = 'Reminders are active';
-    } else {
-      toast('Notifications blocked — enable in browser settings');
-      if (badge) { badge.textContent = 'Blocked'; badge.className = 'badge br'; }
-    }
-  });
-}
-
-async function deleteCollection(colName, field, uid) {
-  const q = FB.query(FB.collection(FB.db, colName), FB.where(field, '==', uid));
-  const snap = await FB.getDocs(q);
-  const deletes = snap.docs.map(d => FB.deleteDoc(FB.doc(FB.db, colName, d.id)));
-  await Promise.all(deletes);
-  return snap.docs.length;
-}
-
-async function confirmClear(type) {
-  const labels = {
-    doses: 'all your dose logs',
-    medicines: 'all your medicines',
-    nudges: 'all nudge messages',
-    all: 'ALL data (doses, medicines and nudges)'
-  };
-  if (!confirm(`Are you sure you want to delete ${labels[type]}? This cannot be undone.`)) return;
-  toast('Clearing...');
-  try {
-    let total = 0;
-    if (type === 'doses' || type === 'all') total += await deleteCollection('doses', 'uid', currentUser.uid);
-    if (type === 'medicines' || type === 'all') total += await deleteCollection('medicines', 'uid', currentUser.uid);
-    if (type === 'nudges' || type === 'all') {
-      total += await deleteCollection('nudges', 'fromUid', currentUser.uid);
-      total += await deleteCollection('nudges', 'toUid', currentUser.uid);
-    }
-    toast(`✅ Deleted ${total} records — fresh start!`);
-  } catch(e) { toast('Error: ' + e.message); console.error(e); }
-}
-
-function openChangePass() { document.getElementById('m-pass').classList.add('op'); }
-
-async function doChangePass() {
-  const np = document.getElementById('new-pass').value;
-  const cp = document.getElementById('confirm-pass').value;
-  const st = document.getElementById('pass-status');
-  if (!np || np.length < 6) { st.textContent = 'Password must be at least 6 characters'; st.className = 'ais no'; return; }
-  if (np !== cp) { st.textContent = 'Passwords do not match'; st.className = 'ais no'; return; }
-  try {
-    await FB.updatePassword(currentUser, np);
-    cm('m-pass');
-    toast('✅ Password updated!');
-  } catch(e) {
-    if (e.code === 'auth/requires-recent-login') {
-      st.textContent = 'Please sign out and sign in again before changing password';
-    } else {
-      st.textContent = 'Error: ' + e.message;
-    }
-    st.className = 'ais no';
-  }
-}
-
-async function confirmDeleteAccount() {
-  if (!confirm('Delete your account permanently? This removes ALL your data and cannot be undone.')) return;
-  if (!confirm('Are you absolutely sure? There is no going back!')) return;
-  try {
-    // Delete all data first
-    await deleteCollection('doses', 'uid', currentUser.uid);
-    await deleteCollection('medicines', 'uid', currentUser.uid);
-    await deleteCollection('nudges', 'fromUid', currentUser.uid);
-    await deleteCollection('nudges', 'toUid', currentUser.uid);
-    await FB.deleteDoc(FB.doc(FB.db,'users',currentUser.uid));
-    await FB.deleteUser(currentUser);
-    toast('Account deleted');
-  } catch(e) {
-    if (e.code === 'auth/requires-recent-login') {
-      alert('Please sign out and sign in again before deleting your account.');
-    } else {
-      toast('Error: ' + e.message);
-    }
-  }
-}
-
-// ── LANGUAGE (Phase 3) ────────────────────────────────────────────────────────
-let currentLang = localStorage.getItem('mm_lang') || 'en';
-
-function toggleLang() {
-  currentLang = currentLang === 'en' ? 'ms' : 'en';
-  localStorage.setItem('mm_lang', currentLang);
-  applyLang();
-}
-
-const TRANSLATIONS = {
-  en: {
-    // Nav
-    home:'Home', log:'Log', family:'Family', monitor:'Monitor',
-    // Home
-    welcomeBack:'Welcome back', medToday:'Your medicines for today',
-    addMed:'+ Add medicine', taken:'✓ Taken', dueNow:'Due now',
-    upcoming:'Upcoming', missed:'Missed', takeDose:'Take dose', remove:'Remove',
-    missedAlert:'You have {n} missed dose{s} today — your monitors can see this.',
-    noMeds:'No medicines yet.\nTap below to add one!',
-    // Log
-    logTitle:'Dose history', logSub:'Your complete medicine log',
-    noDoses:'No doses recorded yet.\nTake your first dose to see history here!',
-    takenAt:'Taken', scheduled:'Scheduled', onTime:'✅ On time',
-    early:'⚡ Early', late:'⏰ Late', notTaken:'— not taken',
-    // Family
-    familyTitle:'Family & friends', familySub:'Let others track your progress live',
-    yourCode:'Your access code', tapCopy:'Tap to copy · Share with people you trust',
-    shareLink:'Or share a direct link', copy:'Copy',
-    inviteTitle:'Add monitor by email', inviteDesc:'The person must have a MedMate account.',
-    inviteBtn:'Add monitor', inviteEmail:'Email address',
-    monitors:'Current monitors', noMonitors:'No monitors added yet',
-    active:'Active',
-    // Monitor
-    monitorTitle:'Monitor', monitorSub:"Track multiple people's medicine progress live",
-    addMonitor:'➕ Add person to monitor', accessCode:'Access code',
-    addView:'Add & view dashboard', liveUpdates:'Live updates',
-    takenToday:'Taken today', streak:'🔥 Streak',
-    sendNudge:'💬 Send a nudge', nudgeTo:'Send a friendly reminder to',
-    sendNudgeBtn:'Send nudge 👋', recentNudges:'Recent nudges',
-    noOneMonitored:'No one being monitored yet.\nEnter a code above to start.',
-    // Settings
-    settingsTitle:'Settings', settingsSub:'Manage your account and preferences',
-    updateName:'Update name', displayName:'Display name',
-    language:'Language', langCurrent:'Currently: English',
-    appearance:'Appearance', darkMode:'Dark mode', darkOff:'Currently off', darkOn:'Currently on',
-    notifications:'Notifications', medReminders:'Medicine reminders', tapEnable:'Tap to enable',
-    data:'Data', clearDoses:'Clear dose logs', clearDoseSub:'Delete all recorded doses',
-    clearMeds:'Clear medicines', clearMedSub:'Delete all your medicines',
-    clearNudges:'Clear nudges', clearNudgeSub:'Delete all nudge messages',
-    clearAll:'Clear all data', clearAllSub:'Fresh start — keeps your account',
-    exportHistory:'Export dose history', exportSub:'Download report for your doctor',
-    security:'Security', changePass:'Change password', changePassSub:'Update your login password',
-    signOut:'Sign out', signOutSub:'Log out of your account',
-    deleteAcc:'Delete account', deleteAccSub:'Permanently remove everything',
-    weeklyReport:'Weekly report', weeklyReportSub:'View your 7-day summary',
-    refillReminders:'Refill reminders', refillSub:'Set low stock alerts per medicine',
-    about:'About', tagline:'Your smart medicine companion',
-    // Add medicine modal
-    addMedTitle:'Add medicine', addMedSub:'Set up reminders with scheduled times',
-    medName:'Medicine name', medNamePlaceholder:'e.g. Metformin 500mg',
-    dosageNotes:'Dosage / notes', dosagePlaceholder:'e.g. 1 tablet with food',
-    icon:'Icon', importance:'Importance level',
-    normal:'🟡 Normal — a bit flexible on timing',
-    critical:'🔴 Critical — must be taken on time',
-    flexible:'🟢 Flexible — any time of day is fine',
-    reminderTimes:'Reminder times', addTime:'+ Add another time',
-    expiryLabel:'Photo must be taken within',
-    // Dose modal
-    uploadPhoto:'Upload a photo of your medicine to confirm',
-    uploadBox:'Upload from gallery', uploadTap:'Tap to choose a photo of your medicine',
-    howFeel:'How do you feel? (optional)', feelPlaceholder:'e.g. Felt dizzy, took with food...',
-    cancel:'Cancel', markTaken:'✓ Mark as taken', capture:'📸 Capture',
-    verifying:'🔍 AI is verifying your photo...', processing:'⏳ Processing image...',
-    // Auth
-    signIn:'Sign in', createAcc:'Create account', noAcc:"No account?", createOne:'Create one',
-    haveAcc:'Already have an account?', signInLink:'Sign in',
-    yourName:'Your name', namePlaceholder:'e.g. Ahmad',
-    email:'Email', password:'Password', passPlaceholder:'Min. 6 characters',
-    savedDevices:'Saved on this device',
-    // Toasts
-    medAdded:'Medicine added!', removed:'Removed', doseTaken:'✅ Dose marked as taken!',
-    inviteSent:'added as monitor', codeCopied:'Code copied!', linkCopied:'Link copied!',
-    nudgeSent:'Nudge sent to', nameUpdated:'✅ Name updated!', passUpdated:'✅ Password updated!',
-  },
-  ms: {
-    // Nav
-    home:'Utama', log:'Log', family:'Keluarga', monitor:'Pantau',
-    // Home
-    welcomeBack:'Selamat kembali', medToday:'Ubat anda untuk hari ini',
-    addMed:'+ Tambah ubat', taken:'✓ Diambil', dueNow:'Masa sekarang',
-    upcoming:'Akan datang', missed:'Terlepas', takeDose:'Ambil dos', remove:'Buang',
-    missedAlert:'Anda ada {n} dos terlepas hari ini — pemantau anda boleh lihat ini.',
-    noMeds:'Tiada ubat lagi.\nKetik di bawah untuk tambah!',
-    // Log
-    logTitle:'Sejarah dos', logSub:'Log ubat lengkap anda',
-    noDoses:'Tiada dos direkodkan lagi.\nAmbil dos pertama untuk lihat sejarah!',
-    takenAt:'Diambil', scheduled:'Dijadual', onTime:'✅ Tepat masa',
-    early:'⚡ Awal', late:'⏰ Lewat', notTaken:'— tidak diambil',
-    // Family
-    familyTitle:'Keluarga & rakan', familySub:'Biar orang lain pantau kemajuan anda secara langsung',
-    yourCode:'Kod akses anda', tapCopy:'Ketik untuk salin · Kongsi dengan orang yang anda percaya',
-    shareLink:'Atau kongsi pautan terus', copy:'Salin',
-    inviteTitle:'Tambah pemantau melalui e-mel', inviteDesc:'Orang itu mesti ada akaun MedMate.',
-    inviteBtn:'Tambah pemantau', inviteEmail:'Alamat e-mel',
-    monitors:'Pemantau semasa', noMonitors:'Tiada pemantau ditambah lagi',
-    active:'Aktif',
-    // Monitor
-    monitorTitle:'Pantau', monitorSub:'Jejak kemajuan ubat beberapa orang secara langsung',
-    addMonitor:'➕ Tambah orang untuk dipantau', accessCode:'Kod akses',
-    addView:'Tambah & lihat papan pemuka', liveUpdates:'Kemas kini langsung',
-    takenToday:'Diambil hari ini', streak:'🔥 Rentak',
-    sendNudge:'💬 Hantar peringatan', nudgeTo:'Hantar peringatan mesra kepada',
-    sendNudgeBtn:'Hantar peringatan 👋', recentNudges:'Peringatan terkini',
-    noOneMonitored:'Tiada orang dipantau lagi.\nMasukkan kod di atas untuk mula.',
-    // Settings
-    settingsTitle:'Tetapan', settingsSub:'Urus akaun dan keutamaan anda',
-    updateName:'Kemas kini nama', displayName:'Nama paparan',
-    language:'Bahasa', langCurrent:'Kini: Bahasa Malaysia',
-    appearance:'Penampilan', darkMode:'Mod gelap', darkOff:'Kini dimatikan', darkOn:'Kini dihidupkan',
-    notifications:'Pemberitahuan', medReminders:'Peringatan ubat', tapEnable:'Ketik untuk aktifkan',
-    data:'Data', clearDoses:'Padam log dos', clearDoseSub:'Padam semua dos direkodkan',
-    clearMeds:'Padam ubat', clearMedSub:'Padam semua ubat anda',
-    clearNudges:'Padam peringatan', clearNudgeSub:'Padam semua mesej peringatan',
-    clearAll:'Padam semua data', clearAllSub:'Mula semula — akaun dikekalkan',
-    exportHistory:'Eksport sejarah dos', exportSub:'Muat turun laporan untuk doktor',
-    security:'Keselamatan', changePass:'Tukar kata laluan', changePassSub:'Kemas kini kata laluan log masuk',
-    signOut:'Log keluar', signOutSub:'Log keluar dari akaun anda',
-    deleteAcc:'Padam akaun', deleteAccSub:'Buang semua data secara kekal',
-    weeklyReport:'Laporan mingguan', weeklyReportSub:'Lihat ringkasan 7 hari anda',
-    refillReminders:'Peringatan isi semula', refillSub:'Tetapkan amaran stok rendah setiap ubat',
-    about:'Tentang', tagline:'Teman ubat pintar anda',
-    // Add medicine modal
-    addMedTitle:'Tambah ubat', addMedSub:'Tetapkan peringatan dengan masa yang dijadual',
-    medName:'Nama ubat', medNamePlaceholder:'cth. Metformin 500mg',
-    dosageNotes:'Dos / nota', dosagePlaceholder:'cth. 1 tablet dengan makanan',
-    icon:'Ikon', importance:'Tahap kepentingan',
-    normal:'🟡 Biasa — sedikit fleksibel dari segi masa',
-    critical:'🔴 Kritikal — mesti diambil tepat masa',
-    flexible:'🟢 Fleksibel — bila-bila masa dalam sehari',
-    reminderTimes:'Masa peringatan', addTime:'+ Tambah masa lain',
-    expiryLabel:'Foto mesti diambil dalam masa',
-    // Dose modal
-    uploadPhoto:'Muat naik foto ubat anda untuk sahkan',
-    uploadBox:'Muat naik dari galeri', uploadTap:'Ketik untuk pilih foto ubat anda',
-    howFeel:'Bagaimana perasaan anda? (pilihan)', feelPlaceholder:'cth. Rasa pening, ambil dengan makanan...',
-    cancel:'Batal', markTaken:'✓ Tandakan sebagai diambil', capture:'📸 Ambil foto',
-    verifying:'🔍 AI sedang mengesahkan foto anda...', processing:'⏳ Memproses imej...',
-    // Auth
-    signIn:'Log masuk', createAcc:'Cipta akaun', noAcc:'Tiada akaun?', createOne:'Cipta satu',
-    haveAcc:'Sudah ada akaun?', signInLink:'Log masuk',
-    yourName:'Nama anda', namePlaceholder:'cth. Ahmad',
-    email:'E-mel', password:'Kata laluan', passPlaceholder:'Min. 6 aksara',
-    savedDevices:'Disimpan di peranti ini',
-    // Toasts
-    medAdded:'Ubat ditambah!', removed:'Dibuang', doseTaken:'✅ Dos ditanda sebagai diambil!',
-    inviteSent:'ditambah sebagai pemantau', codeCopied:'Kod disalin!', linkCopied:'Pautan disalin!',
-    nudgeSent:'Peringatan dihantar kepada', nameUpdated:'✅ Nama dikemas kini!', passUpdated:'✅ Kata laluan dikemas kini!',
-  }
-};
-
-function t(key, vars) {
-  const str = TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS.en[key] || key;
-  if (!vars) return str;
-  return Object.entries(vars).reduce((s,[k,v]) => s.replace(`{${k}}`, v), str);
-}
-
-function applyLang() {
-  const isMs = currentLang === 'ms';
-  // Badge
-  const badge = document.getElementById('lang-badge');
-  const sub = document.getElementById('lang-sub');
-  if (badge) badge.textContent = isMs ? 'BM' : 'EN';
-  if (sub) sub.textContent = isMs ? 'Kini: Bahasa Malaysia' : 'Currently: English';
-  // Nav tabs
-  const tabKeys = ['home','log','family','monitor'];
-  document.querySelectorAll('.tab').forEach((tab, i) => {
-    if (i < tabKeys.length) tab.textContent = t(tabKeys[i]);
-  });
-  // Page headings
-  const phMap = {
-    'pg-home': ['ph','log','family','monitor'],
-  };
-  // All data-t attributes
-  document.querySelectorAll('[data-t]').forEach(el => {
-    const key = el.getAttribute('data-t');
-    const attr = el.getAttribute('data-t-attr') || 'textContent';
-    if (attr === 'placeholder') el.placeholder = t(key);
-    else el.textContent = t(key);
-  });
-  // Legacy data-en/data-ms
-  document.querySelectorAll('[data-en]').forEach(el => {
-    el.textContent = isMs ? el.getAttribute('data-ms') : el.getAttribute('data-en');
-  });
-  // Dynamic content
-  refreshDynamicText();
-}
-
-function refreshDynamicText() {
-  // Update home subtitle
-  const ps = document.querySelector('#pg-home .ps');
-  if (ps) ps.textContent = t('medToday');
-  // Update log
-  const logPh = document.querySelector('#pg-log .ph');
-  const logPs = document.querySelector('#pg-log .ps');
-  if (logPh) logPh.textContent = t('logTitle');
-  if (logPs) logPs.textContent = t('logSub');
-  // Add medicine button
-  const addBtn = document.querySelector('#pg-home button.bo');
-  if (addBtn) addBtn.textContent = t('addMed');
-  // Re-render home if meds loaded
-  if (meds.length || doses.length) { rHome(); rLog(); }
-}
-
-// Apply on load
-applyLang();
-
-// ── WEEKLY REPORT (Phase 3) ────────────────────────────────────────────────────
-function showWeeklyReport() {
-  const el = document.getElementById('report-content');
-  const now = new Date();
-  let totalScheduled = 0, totalTaken = 0, totalMissed = 0;
-  let medStats = [];
-
-  meds.forEach(m => {
-    const times = getMedTimes(m);
-    let mTaken = 0, mMissed = 0;
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const ds = d.toDateString();
-      // Skip today's future times
-      times.forEach(t => {
-        const [h,mn] = t.split(':').map(Number), s = new Date(d); s.setHours(h,mn,0,0);
-        if (s > now && i === 0) return; // future slot today
-        totalScheduled++;
-        const taken = doses.find(dose =>
-          dose.medId === m.id &&
-          (dose.scheduledTime === t || (!dose.scheduledTime && t === times[0])) &&
-          tsToDate(dose.takenAt).toDateString() === ds
-        );
-        if (taken) { totalTaken++; mTaken++; }
-        else { totalMissed++; mMissed++; }
-      });
-    }
-    medStats.push({ m, mTaken, mMissed, total: mTaken + mMissed });
-  });
-
-  const pct = totalScheduled > 0 ? Math.round((totalTaken/totalScheduled)*100) : 0;
-  const color = pct >= 80 ? 'var(--blue)' : pct >= 50 ? 'var(--warn)' : 'var(--red)';
-  const emoji = pct >= 80 ? '🌟' : pct >= 50 ? '💪' : '⚠️';
-
-  el.innerHTML = `
-    <!-- Score -->
-    <div style="text-align:center;padding:20px;background:var(--blue-light);border-radius:16px;margin-bottom:16px">
-      <div style="font-size:48px;font-weight:700;color:${color}">${pct}%</div>
-      <div style="font-size:14px;font-weight:600;margin-top:4px">${emoji} Adherence rate this week</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">${totalTaken} of ${totalScheduled} doses taken</div>
-    </div>
-    <!-- Streak -->
-    <div style="display:flex;gap:5px;justify-content:center;margin-bottom:16px">
-      ${buildWeekDots()}
-    </div>
-    <!-- Per medicine breakdown -->
-    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Per medicine</div>
-    ${medStats.map(({m, mTaken, mMissed, total}) => {
-      const mp = total > 0 ? Math.round((mTaken/total)*100) : 0;
-      const mc = mp >= 80 ? 'var(--blue)' : mp >= 50 ? 'var(--warn)' : 'var(--red)';
-      return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:8px">
-        <span style="font-size:20px">${m.icon}</span>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600">${m.name}</div>
-          <div style="font-size:11px;color:var(--muted)">${mTaken} taken · ${mMissed} missed</div>
-        </div>
-        <div style="font-size:16px;font-weight:700;color:${mc}">${mp}%</div>
-      </div>`;
-    }).join('')}
-    ${meds.length === 0 ? '<div class="es" style="padding:16px">No medicines set up yet</div>' : ''}
-  `;
-  document.getElementById('m-report').classList.add('op');
-}
-
-function buildWeekDots() {
-  return Array.from({length:7}, (_,i) => {
-    const d = new Date(); d.setDate(d.getDate()-(6-i));
-    const ds = d.toDateString();
-    const anyTaken = doses.some(x => tsToDate(x.takenAt).toDateString() === ds);
-    const dayLabel = ['S','M','T','W','T','F','S'][d.getDay()];
-    return `<div style="text-align:center">
-      <div style="width:32px;height:32px;border-radius:50%;background:${anyTaken?'var(--blue)':'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${anyTaken?'#fff':'var(--muted)'}">${dayLabel}</div>
-      <div style="font-size:9px;color:var(--muted);margin-top:2px">${d.getDate()}</div>
-    </div>`;
-  }).join('');
-}
-
-// ── REFILL REMINDER (Phase 3) ──────────────────────────────────────────────────
-function openRefillSettings() {
-  const el = document.getElementById('refill-list');
-  if (!meds.length) {
-    el.innerHTML = '<div class="es" style="padding:16px">No medicines added yet</div>';
-  } else {
-    el.innerHTML = meds.map(m => {
-      const refill = m.refillAt || 5;
-      const stock = m.stock || null;
-      return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:18px">${m.icon}</span>
-          <div style="font-weight:600;font-size:13px">${m.name}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="flex:1">
-            <label style="font-size:11px">Current stock (doses left)</label>
-            <input type="number" min="0" value="${stock || ''}" placeholder="e.g. 30"
-              onchange="updateRefill('${m.id}','stock',this.value)"
-              style="font-size:13px;padding:8px 12px"/>
-          </div>
-          <div style="flex:1">
-            <label style="font-size:11px">Alert when below</label>
-            <input type="number" min="1" value="${refill}" placeholder="e.g. 5"
-              onchange="updateRefill('${m.id}','refillAt',this.value)"
-              style="font-size:13px;padding:8px 12px"/>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-  document.getElementById('m-refill').classList.add('op');
-}
-
-async function updateRefill(medId, field, value) {
-  try {
-    await FB.updateDoc(FB.doc(FB.db,'medicines',medId), { [field]: parseInt(value) || 0 });
-  } catch(e) { console.error('updateRefill:', e); }
-}
-
-function checkRefillAlerts() {
-  meds.forEach(m => {
-    if (m.stock && m.refillAt && m.stock <= m.refillAt) {
-      toast(`⚠️ Low stock: ${m.name} — only ${m.stock} doses left!`);
-    }
-  });
-}
-
-// ── PROFILE PHOTO (Phase 4) ────────────────────────────────────────────────────
-async function uploadProfilePic(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  toast('Uploading photo...');
-  const reader = new FileReader();
-  reader.onload = async e => {
-    // Compress to small size
-    const img = new Image();
-    img.onload = async () => {
-      const canvas = document.createElement('canvas');
-      const size = 128;
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      // Crop to circle-friendly square
-      const min = Math.min(img.width, img.height);
-      const sx = (img.width - min) / 2, sy = (img.height - min) / 2;
-      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-      // Save to Firestore user doc
-      try {
-        await FB.updateDoc(FB.doc(FB.db,'users',currentUser.uid), { photoURL: dataUrl });
-        // Update avatar display
-        const avatar = document.getElementById('settings-avatar');
-        const homeAvatar = document.getElementById('home-avatar');
-        avatar.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover"/>`;
-        if (homeAvatar) homeAvatar.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>`;
-        toast('✅ Profile photo updated!');
-      } catch(e) { toast('Failed to save photo: ' + e.message); }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-// ── ONBOARDING (Phase 4) ───────────────────────────────────────────────────────
-const onboardSlides = [
-  { icon:'💊', title:'Welcome to MedMate', body:'Your smart medicine companion. Never miss a dose again with photo verification and family monitoring.' },
-  { icon:'📸', title:'Photo verification', body:'When it\'s time to take your medicine, snap a photo to confirm. Our AI checks that it\'s the right medicine.' },
-  { icon:'👨‍👩‍👧', title:'Family monitoring', body:'Share your access code with family or caregivers. They get a live dashboard of your medicine progress.' },
-  { icon:'🔔', title:'Smart reminders', body:'Set reminder times for each medicine. We\'ll notify you when it\'s time — even multiple times a day.' },
-  { icon:'🚀', title:'Ready to start!', body:'Add your first medicine to get started. You can always change settings later.' }
-];
-let onboardIndex = 0;
-
-function showOnboarding() {
-  onboardIndex = 0;
-  renderOnboardSlide();
-  document.getElementById('m-onboard').classList.add('op');
-}
-
-function renderOnboardSlide() {
-  const s = onboardSlides[onboardIndex];
-  const isLast = onboardIndex === onboardSlides.length - 1;
-  document.getElementById('onboard-slides').innerHTML = `
-    <div style="text-align:center;padding:20px 10px">
-      <div style="font-size:64px;margin-bottom:16px">${s.icon}</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:10px">${s.title}</div>
-      <div style="font-size:14px;color:var(--muted);line-height:1.6">${s.body}</div>
-    </div>`;
-  // Dots
-  document.getElementById('onboard-dots').innerHTML = onboardSlides.map((_,i) =>
-    `<div style="width:${i===onboardIndex?'20px':'8px'};height:8px;border-radius:4px;background:${i===onboardIndex?'var(--blue)':'var(--border)'};transition:all .3s"></div>`
-  ).join('');
-  document.getElementById('onboard-next').textContent = isLast ? '✓ Get started' : 'Next →';
-  document.getElementById('onboard-skip').style.display = isLast ? 'none' : 'flex';
-}
-
-function nextOnboardSlide() {
-  if (onboardIndex < onboardSlides.length - 1) {
-    onboardIndex++;
-    renderOnboardSlide();
-  } else {
-    finishOnboard();
-  }
-}
-
-function finishOnboard() {
-  localStorage.setItem('mm_onboarded', '1');
-  cm('m-onboard');
-}
-
-// Check if first time user
-function checkOnboarding() {
-  if (!localStorage.getItem('mm_onboarded')) {
-    setTimeout(showOnboarding, 800);
-  }
-}
-
-// ── MEDICINE DATABASE (Phase 4) ────────────────────────────────────────────────
-// Common medicines database
-const MEDICINE_DB = [
-  { name:'Paracetamol', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Take with water. Max 4g/day.' },
-  { name:'Paracetamol', dosage:'1000mg', form:'Tablet', icon:'💊', notes:'Take with water. Max 4g/day.' },
-  { name:'Ibuprofen', dosage:'400mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
-  { name:'Ibuprofen', dosage:'200mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
-  { name:'Metformin', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Take with meals.' },
-  { name:'Metformin', dosage:'850mg', form:'Tablet', icon:'💊', notes:'Take with meals.' },
-  { name:'Metformin', dosage:'1000mg', form:'Tablet', icon:'💊', notes:'Take with meals.' },
-  { name:'Amlodipine', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
-  { name:'Amlodipine', dosage:'10mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
-  { name:'Atorvastatin', dosage:'10mg', form:'Tablet', icon:'💊', notes:'Take at night.' },
-  { name:'Atorvastatin', dosage:'20mg', form:'Tablet', icon:'💊', notes:'Take at night.' },
-  { name:'Atorvastatin', dosage:'40mg', form:'Tablet', icon:'💊', notes:'Take at night.' },
-  { name:'Simvastatin', dosage:'20mg', form:'Tablet', icon:'💊', notes:'Take at night.' },
-  { name:'Lisinopril', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
-  { name:'Lisinopril', dosage:'10mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
-  { name:'Omeprazole', dosage:'20mg', form:'Capsule', icon:'💊', notes:'Take 30 mins before meal.' },
-  { name:'Omeprazole', dosage:'40mg', form:'Capsule', icon:'💊', notes:'Take 30 mins before meal.' },
-  { name:'Pantoprazole', dosage:'40mg', form:'Tablet', icon:'💊', notes:'Take before meals.' },
-  { name:'Aspirin', dosage:'75mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
-  { name:'Aspirin', dosage:'100mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
-  { name:'Losartan', dosage:'50mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
-  { name:'Losartan', dosage:'100mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
-  { name:'Salbutamol', dosage:'100mcg', form:'Inhaler', icon:'🫁', notes:'Shake before use.' },
-  { name:'Prednisolone', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take with food.' },
-  { name:'Amoxicillin', dosage:'250mg', form:'Capsule', icon:'💊', notes:'Complete full course.' },
-  { name:'Amoxicillin', dosage:'500mg', form:'Capsule', icon:'💊', notes:'Complete full course.' },
-  { name:'Azithromycin', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Complete full course.' },
-  { name:'Cetirizine', dosage:'10mg', form:'Tablet', icon:'💊', notes:'May cause drowsiness.' },
-  { name:'Loratadine', dosage:'10mg', form:'Tablet', icon:'💊', notes:'Non-drowsy antihistamine.' },
-  { name:'Vitamin D3', dosage:'1000 IU', form:'Capsule', icon:'💊', notes:'Take with fatty meal.' },
-  { name:'Vitamin D3', dosage:'5000 IU', form:'Capsule', icon:'💊', notes:'Take with fatty meal.' },
-  { name:'Vitamin C', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Take after meals.' },
-  { name:'Folic Acid', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take daily.' },
-  { name:'Iron supplement', dosage:'325mg', form:'Tablet', icon:'💊', notes:'Take on empty stomach.' },
-  { name:'Calcium', dosage:'500mg', form:'Tablet', icon:'💊', notes:'Take with Vitamin D.' },
-  { name:'Metoprolol', dosage:'50mg', form:'Tablet', icon:'💊', notes:'Do not stop suddenly.' },
-  { name:'Bisoprolol', dosage:'5mg', form:'Tablet', icon:'💊', notes:'Take at same time daily.' },
-  { name:'Warfarin', dosage:'1mg', form:'Tablet', icon:'💊', notes:'Regular INR monitoring needed.' },
-  { name:'Insulin', dosage:'', form:'Injection', icon:'💉', notes:'Rotate injection sites.' },
-  { name:'Methotrexate', dosage:'2.5mg', form:'Tablet', icon:'💊', notes:'Take once weekly only.' },
-];
-
-function openMedDB() {
-  document.getElementById('meddb-search').value = '';
-  document.getElementById('meddb-results').innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Type a medicine name to search</div>';
-  document.getElementById('m-meddb').classList.add('op');
-}
-
-async function medAutocomplete(query) {
-  const el = document.getElementById('med-ac');
-  const q = query.trim();
-  if (!q || q.length < 2) { el.style.display = 'none'; return; }
-
-  // First show local results instantly
-  const local = MEDICINE_DB.filter(m => m.name.toLowerCase().includes(q.toLowerCase())).slice(0,3);
-
-  // Then fetch from OpenFDA
-  try {
-    const res = await fetch(`https://api.fda.gov/drug/label.json?search=brand_name:${encodeURIComponent(q)}+generic_name:${encodeURIComponent(q)}&limit=8`);
-    const data = await res.json();
-    const fdaResults = (data.results || []).map(r => ({
-      name: r.openfda?.brand_name?.[0] || r.openfda?.generic_name?.[0] || q,
-      dosage: r.openfda?.strength?.[0] || '',
-      form: r.dosage_form?.[0] || 'tablet',
-      icon: '💊',
-      notes: r.indications_and_usage?.[0]?.substring(0,80) || ''
-    })).filter((m,i,arr) => arr.findIndex(x=>x.name===m.name)===i); // dedupe
-
-    const combined = [...local, ...fdaResults].filter((m,i,arr) =>
-      arr.findIndex(x=>x.name.toLowerCase()===m.name.toLowerCase())===i
-    ).slice(0,10);
-
-    if (!combined.length) { el.style.display = 'none'; return; }
-    el.style.display = 'block';
-    el.innerHTML = combined.map(m =>
-      `<div onmousedown="selectMedAC('${m.name.replace(/'/g,"\\'")}','${(m.dosage||'').replace(/'/g,"\\'")}','${(m.notes||'').replace(/'/g,"\\'").substring(0,60)}','${m.icon}')"
-        style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;display:flex;align-items:center;gap:10px"
-        onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='transparent'">
-        <span style="font-size:16px">${m.icon}</span>
-        <div>
-          <div style="font-size:13px;font-weight:600">${m.name} <span style="color:var(--blue);font-size:12px">${m.dosage}</span></div>
-          ${m.notes ? `<div style="font-size:11px;color:var(--muted)">${m.notes.substring(0,60)}${m.notes.length>60?'...':''}</div>` : ''}
-        </div>
-      </div>`
-    ).join('');
-  } catch(e) {
-    // Fallback to local only
-    if (!local.length) { el.style.display = 'none'; return; }
-    el.style.display = 'block';
-    el.innerHTML = local.map(m =>
-      `<div onmousedown="selectMedAC('${m.name}','${m.dosage}','${m.notes}','${m.icon}')"
-        style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border)"
-        onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='transparent'">
-        <span style="font-size:16px">${m.icon}</span>
-        <span style="font-size:13px;font-weight:600;margin-left:8px">${m.name} ${m.dosage}</span>
-      </div>`
-    ).join('');
-  }
-}
-
-function selectMedAC(name, dosage, notes, icon) {
-  document.getElementById('mn').value = name + (dosage ? ' ' + dosage : '');
-  document.getElementById('md').value = notes;
-  const iconEl = document.getElementById('micon');
-  if (icon === '💉') iconEl.value = '💉';
-  else if (icon === '🫁') iconEl.value = '🫁';
-  else iconEl.value = '💊';
-  closeMedAC();
-  toast(`✅ ${name} ${dosage} selected!`);
-}
-
-function closeMedAC() {
-  const el = document.getElementById('med-ac');
-  if (el) el.style.display = 'none';
-}
-
-function selectMedFromDB(name, dosage, notes, icon) {
-  document.getElementById('mn').value = name + (dosage ? ' ' + dosage : '');
-  document.getElementById('md').value = notes;
-  const iconEl = document.getElementById('micon');
-  if (icon === '💉') iconEl.value = '💉';
-  else if (icon === '🫁') iconEl.value = '🫁';
-  else iconEl.value = '💊';
-  cm('m-meddb');
-  toast(`✅ ${name} ${dosage} filled in!`);
-}
-
-// ── EXPORT PDF (Phase 4) ───────────────────────────────────────────────────────
-function exportPDF() {
-  if (!doses.length) { toast('No dose history to export'); return; }
-  const name = currentUser.displayName || currentUser.email.split('@')[0];
-  const date = new Date().toLocaleDateString('en-MY', {year:'numeric',month:'long',day:'numeric'});
-
-  let rows = doses.slice(0, 50).map(d => {
-    const m = meds.find(x => x.id === d.medId);
-    const t = tsToDate(d.takenAt);
-    const ts = d.timingStatus || 'on-time';
-    const tsLabel = {early:'Early','on-time':'On Time',late:'Late'}[ts];
-    return `<tr>
-      <td>${t.toLocaleDateString('en-MY',{day:'numeric',month:'short',year:'numeric'})}</td>
-      <td>${d.medName || m?.name || 'Unknown'}</td>
-      <td>${d.scheduledTime || d.medTime || '-'}</td>
-      <td>${t.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})}</td>
-      <td>${tsLabel}</td>
-      <td>${d.notes || '-'}</td>
-    </tr>`;
-  }).join('');
-
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-    <style>
-      body{font-family:Arial,sans-serif;padding:30px;color:#1a1a2e}
-      h1{color:#2563eb;margin-bottom:4px}
-      .sub{color:#64748b;font-size:13px;margin-bottom:24px}
-      table{width:100%;border-collapse:collapse;font-size:12px}
-      th{background:#2563eb;color:#fff;padding:8px 10px;text-align:left}
-      td{padding:7px 10px;border-bottom:1px solid #e2e8f0}
-      tr:nth-child(even){background:#f8fafc}
-    </style></head><body>
-    <h1>💊 MedMate — Dose History</h1>
-    <div class="sub">Patient: ${name} · Generated: ${date}</div>
-    <table>
-      <thead><tr><th>Date</th><th>Medicine</th><th>Scheduled</th><th>Taken at</th><th>Timing</th><th>Notes</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </body></html>`;
-
-  const blob = new Blob([html], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `MedMate_${name}_${new Date().toISOString().slice(0,10)}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('✅ Report downloaded!');
-}
-
-// ── URL PARAM: auto-open monitor ───────────────────────────────────────────────
-const _mc = new URLSearchParams(location.search).get('monitor');
-if (_mc) {
-  window.addEventListener('fbready', () => {
-    FB.onAuthStateChanged(FB.auth, user => {
-      if (user) {
-        setTimeout(() => {
-          document.querySelectorAll('.tab')[3].click();
-          document.getElementById('mcode').value = _mc.toUpperCase();
-          doMonitor();
-        }, 800);
-      }
-    });
-  });
-}
-</script>
 </body>
 </html>
